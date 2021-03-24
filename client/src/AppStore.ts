@@ -1,47 +1,51 @@
 import { observable } from "mobx";
 import Peer from "peerjs";
+import * as signalR from "@microsoft/signalr";
 
 class AppStore {
-
   @observable public connected = false;
-  @observable public stunList = `stun:stun.l.google.com:19302`
-    + `\nstun1.l.google.com:19302`;
+  @observable public stunList =
+    `stun:stun.l.google.com:19302` + `\nstun1.l.google.com:19302`;
 
-  @observable public signalingServer = "https://localhost:9000/myapp";
+  @observable public signalingServer = "https://localhost:5001/recording";
 
   @observable public uiMessages = observable([]) as any;
-  @observable communicationValues = observable(['chat', 'screen', 'call']) as any;
+  @observable communicationValues = observable([
+    "chat",
+    "screen",
+    "call",
+  ]) as any;
 
   public connect = (): Promise<void> => {
-    return new Promise<void>((resolve, reject) => {
-
-      const signalingServerUrl = new URL(this.signalingServer);
+    return new Promise<void>(async (resolve, reject) => {
       const config = {
-        iceServers: this.stunList.split('\n').map(s => { return { urls: s } }),
+        iceServers: this.stunList.split("\n").map((s) => {
+          return { urls: s };
+        }),
         // sdpSemantics: "unified-plan",
+      };
+
+      console.log("Will connect using config ", config);
+
+      const connection = new signalR.HubConnectionBuilder()
+        .withUrl(this.signalingServer)
+        .configureLogging(signalR.LogLevel.Information)
+        .withAutomaticReconnect()
+        .build();
+      
+      try {
+        await connection.start();
+        console.log("Connected to Signaling Server");
+        await connection.invoke("Ping");
+        connection.on("Pong", () => console.log('Pong'));
+        resolve();
+      } catch (e) {
+        console.error("Error with Signaling Server", e);
+        reject();
       }
 
-      console.log('Will connect using config ', config);
-
-      const peer = new Peer("agent", {
-        host: signalingServerUrl.hostname,
-        port: parseInt(signalingServerUrl.port),
-        path: signalingServerUrl.pathname,
-        config,
-      });
-
-      peer.on('open', () => {
-        console.log('Connected to Signaling Server')
-        resolve();
-      })
-
-      peer.on('error', (e) => {
-        console.error('Error with Signaling Server', e)
-        reject();
-      })
-
-    })
-  }
+    });
+  };
 }
 
 export default new AppStore();

@@ -20,7 +20,7 @@ namespace signaling.hubs
 
         public override async Task OnConnectedAsync()
         {
-            this.logger.LogDebug("OnConnected " + this.Context.ConnectionId);
+            this.logger.LogDebug("Client connected with " + this.Context.ConnectionId);
             await base.OnConnectedAsync();
         }
 
@@ -28,6 +28,10 @@ namespace signaling.hubs
 
         public async Task Start() { }
         public async Task Stop() { }
+
+        public async Task Ping() {
+            await this.Clients.Caller.Pong();
+        }
 
         #region ICE Negotiation
         public async Task AddIceCandidate(IceCandidate candidate)

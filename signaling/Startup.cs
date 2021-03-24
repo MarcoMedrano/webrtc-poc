@@ -14,17 +14,29 @@ namespace signaling
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton(p => new KurentoClient("ws://localhost:8888/kurento"));
+
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(builder =>
+                {
+                    // builder.WithOrigins("http://localhost:3000").AllowCredentials().AllowAnyMethod();
+                    builder.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
+                });
+
+            });
+
             services.AddSignalR();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if(env.IsDevelopment())
+            if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseCors();
             app.UseRouting();
 
             app.UseEndpoints(endpoints =>

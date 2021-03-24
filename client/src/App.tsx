@@ -85,7 +85,7 @@ class App extends React.Component<AppProps> {
           variant="contained"
           color="primary"
           onClick={() => {
-            window.open("chrome://webrtc-internals", "_blank");
+            // window.open("chrome://webrtc-internals", "_blank");
             AppStore.connect();
           }}
         >
