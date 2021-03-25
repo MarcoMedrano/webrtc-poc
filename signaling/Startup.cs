@@ -19,8 +19,7 @@ namespace signaling
             {
                 options.AddDefaultPolicy(builder =>
                 {
-                    // builder.WithOrigins("http://localhost:3000").AllowCredentials().AllowAnyMethod();
-                    builder.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
+                    builder.WithOrigins("http://localhost:3000").AllowCredentials().AllowAnyHeader();
                 });
 
             });

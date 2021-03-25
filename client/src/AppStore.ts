@@ -5,39 +5,35 @@ import * as signalR from "@microsoft/signalr";
 class AppStore {
   @observable public connected = false;
   @observable public stunList =
-    `stun:stun.l.google.com:19302` + `\nstun1.l.google.com:19302`;
+    `stun:stun.l.google.com:19302` + `\nstun:stun1.l.google.com:19302`;
 
   @observable public signalingServer = "https://localhost:5001/recording";
 
   @observable public uiMessages = observable([]) as any;
+  @observable public stream: MediaStream | null = null
   @observable communicationValues = observable([
     "chat",
     "screen",
     "call",
   ]) as any;
 
-  public connect = (): Promise<void> => {
+  private connection: signalR.HubConnection | null = null;
+  private rtcPeerConnection: RTCPeerConnection | null = null;
+
+  public connect = (stream: MediaStream): Promise<void> => {
     return new Promise<void>(async (resolve, reject) => {
-      const config = {
-        iceServers: this.stunList.split("\n").map((s) => {
-          return { urls: s };
-        }),
-        // sdpSemantics: "unified-plan",
-      };
-
-      console.log("Will connect using config ", config);
-
-      const connection = new signalR.HubConnectionBuilder()
+      this.connection = new signalR.HubConnectionBuilder()
         .withUrl(this.signalingServer)
         .configureLogging(signalR.LogLevel.Information)
         .withAutomaticReconnect()
         .build();
       
       try {
-        await connection.start();
+        await this.connection.start();
         console.log("Connected to Signaling Server");
-        await connection.invoke("Ping");
-        connection.on("Pong", () => console.log('Pong'));
+        this.connection.on("Pong", () => console.log('Pong'));
+        await this.connection.invoke("Ping");
+        this.startIceNegotiation();
         resolve();
       } catch (e) {
         console.error("Error with Signaling Server", e);
@@ -46,6 +42,24 @@ class AppStore {
 
     });
   };
+
+  private startIceNegotiation = () => {
+    const config = {
+      iceServers: this.stunList.split("\n").map((s) => {
+        return { urls: s };
+      }),
+      // sdpSemantics: "unified-plan",
+    };
+
+    console.log("Starting ICE negotiation with ", config);
+    this.rtcPeerConnection = new RTCPeerConnection(config);
+    this.rtcPeerConnection.onicecandidate = (event) => {
+      console.log("onicecandidate", event);
+      if (event.candidate) {
+        this.connection?.invoke('AddIceCandidate', event.candidate);
+      }
+    }
+  }
 }
 
 export default new AppStore();

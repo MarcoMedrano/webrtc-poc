@@ -43,6 +43,8 @@ interface AppProps extends WithStyles<typeof styles> {}
 
 @observer
 class App extends React.Component<AppProps> {
+  private videoRef: HTMLVideoElement | null = null;
+
   render() {
     return (
       <div className="App">
@@ -84,13 +86,20 @@ class App extends React.Component<AppProps> {
         <Button
           variant="contained"
           color="primary"
-          onClick={() => {
-            // window.open("chrome://webrtc-internals", "_blank");
-            AppStore.connect();
+          onClick={async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              audio: false,
+              video: { width: 360, height: 240 },
+            });
+
+            this.videoRef!.srcObject = stream;
+
+            AppStore.connect(stream);
           }}
         >
           CONNECT
         </Button>
+        <video ref={(video) => (this.videoRef = video)} autoPlay />
       </div>
     );
   }

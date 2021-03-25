@@ -15,12 +15,12 @@ namespace signaling.hubs
             this.kurento = kurento;
             this.logger = logger;
 
-            this.logger.LogDebug("created hub.");
+            this.logger.LogDebug("RecordingHub created.");
         }
 
         public override async Task OnConnectedAsync()
         {
-            this.logger.LogDebug("Client connected with " + this.Context.ConnectionId);
+            this.logger.LogDebug("Client connected with ID " + this.Context.ConnectionId);
             await base.OnConnectedAsync();
         }
 
@@ -30,6 +30,7 @@ namespace signaling.hubs
         public async Task Stop() { }
 
         public async Task Ping() {
+            this.logger.LogDebug("Ping");
             await this.Clients.Caller.Pong();
         }
 
