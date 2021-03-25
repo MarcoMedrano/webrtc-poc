@@ -1,6 +1,7 @@
 using Kurento.NET;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System.Threading.Tasks;
 
 namespace signaling.hubs
@@ -14,8 +15,6 @@ namespace signaling.hubs
         {
             this.kurento = kurento;
             this.logger = logger;
-
-            this.logger.LogDebug("RecordingHub created.");
         }
 
         public override async Task OnConnectedAsync()
@@ -42,12 +41,14 @@ namespace signaling.hubs
             await endpoint.AddIceCandidateAsync(candidate);
 
         }
-        public async Task AddOffer(string sdpOffer)
+        public async Task AddSdp(string sdpOffer)
         {
-            this.logger.LogDebug("adding offer", sdpOffer);
+            this.logger.LogDebug("adding offer " + sdpOffer);
             var endpoint = await GetKurentoEndpointAsync();
             var sdpAnswer = await endpoint.ProcessOfferAsync(sdpOffer);
-            Clients.Caller.AddAnswer(sdpAnswer);
+
+            Clients.Caller.AddRemoteSdp(sdpAnswer);
+
             await endpoint.GatherCandidatesAsync();
         }
 
@@ -65,7 +66,8 @@ namespace signaling.hubs
             endpoint = await this.kurento.CreateAsync(new WebRtcEndpoint(pipeline));
             endpoint.OnIceCandidate += arg =>
             {
-                Clients.Caller.AddIceCandidate(this.Context.ConnectionId, arg.candidate);
+                this.logger.LogInformation("Kurento ice candidate " + JsonConvert.SerializeObject(arg.candidate));
+                Clients.Caller.AddRemoteIceCandidate(JsonConvert.SerializeObject(arg.candidate));
             };
 
             this.Context.Items.Add("kurento_endpoint", endpoint);

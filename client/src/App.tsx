@@ -13,8 +13,8 @@ import {
   Divider,
 } from "@material-ui/core";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
-import { observer } from "mobx-react";
 import { TextField } from "@material-ui/core";
+import { observer } from "mobx-react";
 import AppStore from "./AppStore";
 
 const styles = ({ spacing, palette }: Theme) =>
@@ -45,7 +45,7 @@ interface AppProps extends WithStyles<typeof styles> {}
 class App extends React.Component<AppProps> {
   private videoRef: HTMLVideoElement | null = null;
 
-  render() {
+  public render() {
     return (
       <div className="App">
         <h2>CLIENT</h2>
@@ -60,6 +60,10 @@ class App extends React.Component<AppProps> {
               label="Urls"
               variant="outlined"
               value={AppStore.stunList}
+              onChange={(e) => {
+                console.log('Changing to ', e.target.value );
+                AppStore.stunList = e.target.value;
+              }}
             />
           </AccordionDetails>
         </Accordion>
@@ -92,7 +96,7 @@ class App extends React.Component<AppProps> {
               video: { width: 360, height: 240 },
             });
 
-            this.videoRef!.srcObject = stream;
+            // this.videoRef!.srcObject = stream;
 
             AppStore.connect(stream);
           }}

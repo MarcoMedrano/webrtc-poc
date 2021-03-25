@@ -1,11 +1,11 @@
 import { observable } from "mobx";
-import Peer from "peerjs";
-import * as signalR from "@microsoft/signalr";
 
+import { MessagePackHubProtocol } from "@microsoft/signalr-protocol-msgpack";
+import * as signalR from "@microsoft/signalr";
 class AppStore {
   @observable public connected = false;
-  @observable public stunList =
-    `stun:stun.l.google.com:19302` + `\nstun:stun1.l.google.com:19302`;
+  @observable public stunList = "stun:stun.l.google.com:19302";
+  // `stun:stun.l.google.com:19302` + `\nstun:stun1.l.google.com:19302`;
 
   @observable public signalingServer = "https://localhost:5001/recording";
 
@@ -25,13 +25,18 @@ class AppStore {
       this.connection = new signalR.HubConnectionBuilder()
         .withUrl(this.signalingServer)
         .configureLogging(signalR.LogLevel.Information)
+        //.withHubProtocol(new MessagePackHubProtocol())
         .withAutomaticReconnect()
         .build();
-      
+
       try {
         await this.connection.start();
         console.log("Connected to Signaling Server");
+
+        this.connection.on('AddRemoteIceCandidate', this.addRemoteIceCandidate)
+        this.connection.on('AddRemoteSdp', this.addRemoteSdp)
         this.connection.on("Pong", () => console.log('Pong'));
+
         await this.connection.invoke("Ping");
         this.startIceNegotiation();
         resolve();
@@ -43,7 +48,7 @@ class AppStore {
     });
   };
 
-  private startIceNegotiation = () => {
+  private startIceNegotiation = async () => {
     const config = {
       iceServers: this.stunList.split("\n").map((s) => {
         return { urls: s };
@@ -59,22 +64,23 @@ class AppStore {
         this.connection?.invoke('AddIceCandidate', event.candidate);
       }
     }
+
+    const offer = await this.rtcPeerConnection.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+
+    await this.rtcPeerConnection.setLocalDescription(offer);
+    await this.connection?.invoke('AddSdp', offer.sdp);
+  }
+
+  private addRemoteIceCandidate(candidate: RTCIceCandidateInit) {
+    console.log("addRemoteIceCandidate ", candidate);
+    // TODO arriving string, check if need to be an object instead
+    this.rtcPeerConnection?.addIceCandidate(new RTCIceCandidate(candidate));
+  }
+
+  private addRemoteSdp(sdpAnswer: string) {
+    console.log("addRemoteSdp ", sdpAnswer);
+    this.rtcPeerConnection?.setRemoteDescription(new RTCSessionDescription({ type: "answer", sdp: sdpAnswer }));
   }
 }
 
 export default new AppStore();
-
-// // Opening a remote connection
-// var remoteConnection = peer.connect("recorder");
-
-// remoteConnection.on("open", () => {
-//   console.log("remote connection opened");
-//   remoteConnection.send("hey");
-// });
-
-// // Accepting a remote connection
-// peer.on("connection", (remoteConnection: any) => {
-//   remoteConnection.on("data", (data: any) => {
-//     console.log(data);
-//   });
-// });
