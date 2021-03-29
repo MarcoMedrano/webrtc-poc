@@ -72,6 +72,8 @@ namespace signaling.hubs
 
             this.Context.Items.Add("kurento_endpoint", endpoint);
 
+            await endpoint.ConnectAsync(endpoint);
+
             return endpoint;
         }
         #endregion
