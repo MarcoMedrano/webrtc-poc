@@ -34,20 +34,21 @@ namespace signaling.hubs
         }
 
         #region ICE Negotiation
-        public async Task AddIceCandidate(IceCandidate candidate)
+        public async Task AddIceCandidate(string candidateStr /*IceCandidate candidate*/)
         {
-            this.logger.LogDebug("adding candidate", candidate);
+            var candidate = JsonConvert.DeserializeObject<IceCandidate>(candidateStr);
+            this.logger.LogDebug("Adding candidate " + JsonConvert.SerializeObject(candidate));
             var endpoint = await this.GetKurentoEndpointAsync();
             await endpoint.AddIceCandidateAsync(candidate);
 
         }
         public async Task AddSdp(string sdpOffer)
         {
-            this.logger.LogDebug("adding offer " + sdpOffer);
+            this.logger.LogDebug("Adding offer " + sdpOffer);
             var endpoint = await GetKurentoEndpointAsync();
             var sdpAnswer = await endpoint.ProcessOfferAsync(sdpOffer);
 
-            Clients.Caller.AddRemoteSdp(sdpAnswer);
+            await Clients.Caller.AddRemoteSdp(sdpAnswer);
 
             await endpoint.GatherCandidatesAsync();
         }
@@ -60,6 +61,8 @@ namespace signaling.hubs
             {
                 return (WebRtcEndpoint)endpointObj;
             }
+
+            this.logger.LogDebug("CREATING KURENTO ENDPOINT ");
 
             var pipeline = await this.kurento.CreateAsync(new MediaPipeline());
 
