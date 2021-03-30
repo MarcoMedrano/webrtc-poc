@@ -10,7 +10,7 @@ class AppStore {
   @observable public signalingServer = "https://localhost:5001/recording";
 
   @observable public uiMessages = observable([]) as any;
-  @observable public stream: MediaStream | null = null
+  @observable public stream: MediaStream | null = null;
   @observable communicationValues = observable([
     "chat",
     "screen",
@@ -19,6 +19,8 @@ class AppStore {
 
   private connection: signalR.HubConnection | null = null;
   private rtcPeerConnection: RTCPeerConnection | null = null;
+
+  public onRemoteTrack: null | ((ms:MediaStream)=> void) = null
 
   public connect = (stream: MediaStream): Promise<void> => {
     return new Promise<void>(async (resolve, reject) => {
@@ -33,22 +35,21 @@ class AppStore {
         await this.connection.start();
         console.log("Connected to Signaling Server");
 
-        this.connection.on('AddRemoteIceCandidate', this.addRemoteIceCandidate)
-        this.connection.on('AddRemoteSdp', this.addRemoteSdp)
-        this.connection.on("Pong", () => console.log('Pong'));
+        this.connection.on("AddRemoteIceCandidate", this.addRemoteIceCandidate);
+        this.connection.on("AddRemoteSdp", this.addRemoteSdp);
+        this.connection.on("Pong", () => console.log("Pong"));
 
         await this.connection.invoke("Ping");
-        this.startIceNegotiation();
+        this.startIceNegotiation(stream);
         resolve();
       } catch (e) {
         console.error("Error with Signaling Server", e);
         reject();
       }
-
     });
   };
 
-  private startIceNegotiation = async () => {
+  private startIceNegotiation = async (stream: MediaStream) => {
     const config = {
       iceServers: this.stunList.split("\n").map((s) => {
         return { urls: s };
@@ -57,29 +58,50 @@ class AppStore {
     };
 
     console.log("Starting ICE negotiation with ", config);
+    console.log("TRACKs", stream.getTracks());
     this.rtcPeerConnection = new RTCPeerConnection(config);
+    this.rtcPeerConnection.ontrack = this.onTrack;
+    this.rtcPeerConnection.addEventListener("track", e => {
+      this.onTrack(e);
+    }, false);
+    this.rtcPeerConnection.addTrack(stream.getTracks()[0]);
     this.rtcPeerConnection.onicecandidate = (event) => {
       console.log("onicecandidate", event);
       if (event.candidate) {
-        this.connection?.invoke('AddIceCandidate', event.candidate);
+        this.connection?.invoke("AddIceCandidate", JSON.stringify(event.candidate));
       }
-    }
+    };
 
-    const offer = await this.rtcPeerConnection.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+    const offer = await this.rtcPeerConnection.createOffer(/*{
+      offerToReceiveAudio: true,
+      offerToReceiveVideo: true,
+    }*/);
 
     await this.rtcPeerConnection.setLocalDescription(offer);
-    await this.connection?.invoke('AddSdp', offer.sdp);
-  }
+    await this.connection?.invoke("AddSdp", offer.sdp);
+  };
 
-  private addRemoteIceCandidate(candidate: RTCIceCandidateInit) {
+  private addRemoteIceCandidate(candidate: string) {
     console.log("addRemoteIceCandidate ", candidate);
     // TODO arriving string, check if need to be an object instead
-    this.rtcPeerConnection?.addIceCandidate(new RTCIceCandidate(candidate));
+    this.rtcPeerConnection?.addIceCandidate(
+      new RTCIceCandidate(JSON.parse(candidate))
+    );
   }
 
-  private addRemoteSdp(sdpAnswer: string) {
+  private addRemoteSdp = async (sdpAnswer: string) => {
     console.log("addRemoteSdp ", sdpAnswer);
-    this.rtcPeerConnection?.setRemoteDescription(new RTCSessionDescription({ type: "answer", sdp: sdpAnswer }));
+    await this.rtcPeerConnection?.setRemoteDescription(
+      new RTCSessionDescription({ type: "answer", sdp: sdpAnswer })
+    );
+
+    // var stream = this.rtcPeerConnection.trac?.()[0]
+    // this.onRemoteTrack!(stream);
+  }
+
+  private onTrack = (event: RTCTrackEvent) => {
+    console.log('AppStore.onTrack', event);
+    this.onRemoteTrack!(event.streams[0])
   }
 }
 

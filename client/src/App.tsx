@@ -44,6 +44,7 @@ interface AppProps extends WithStyles<typeof styles> {}
 @observer
 class App extends React.Component<AppProps> {
   private videoRef: HTMLVideoElement | null = null;
+  private peerVideoRef: HTMLVideoElement | null = null;
 
   public render() {
     return (
@@ -61,7 +62,7 @@ class App extends React.Component<AppProps> {
               variant="outlined"
               value={AppStore.stunList}
               onChange={(e) => {
-                console.log('Changing to ', e.target.value );
+                console.log("Changing to ", e.target.value);
                 AppStore.stunList = e.target.value;
               }}
             />
@@ -99,11 +100,15 @@ class App extends React.Component<AppProps> {
             // this.videoRef!.srcObject = stream;
 
             AppStore.connect(stream);
+            AppStore.onRemoteTrack = (stream: MediaStream) => {
+              this.peerVideoRef!.srcObject = stream;
+            };
           }}
         >
           CONNECT
         </Button>
         <video ref={(video) => (this.videoRef = video)} autoPlay />
+        <video ref={(video) => (this.peerVideoRef = video)} autoPlay />
       </div>
     );
   }
