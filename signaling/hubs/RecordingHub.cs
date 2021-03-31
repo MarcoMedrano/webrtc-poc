@@ -2,6 +2,7 @@ using Kurento.NET;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System;
 using System.Threading.Tasks;
 
 namespace signaling.hubs
@@ -25,10 +26,33 @@ namespace signaling.hubs
 
         public async Task Init() { }
 
-        public async Task Start() { }
-        public async Task Stop() { }
+        public async Task Start()
+        {
+            this.logger.LogDebug("Start Recording");
+            if (this.Context.Items.ContainsKey("recorder_endpoint")
+            && this.Context.Items.TryGetValue("recorder_endpoint", out object recorderObj))
+            {
+                RecorderEndpoint recorder = (RecorderEndpoint)recorderObj;
 
-        public async Task Ping() {
+                await recorder.RecordAsync();
+
+            }
+        }
+        public async Task Stop()
+        {
+            this.logger.LogDebug("Stop Recording");
+            if (this.Context.Items.ContainsKey("recorder_endpoint")
+                        && this.Context.Items.TryGetValue("recorder_endpoint", out object recorderObj))
+            {
+                RecorderEndpoint recorder = (RecorderEndpoint)recorderObj;
+
+                await recorder.StopAsync();
+
+            }
+        }
+
+        public async Task Ping()
+        {
             this.logger.LogDebug("Ping");
             await this.Clients.Caller.Pong();
         }
@@ -44,7 +68,7 @@ namespace signaling.hubs
         }
         public async Task AddSdp(string sdpOffer)
         {
-            this.logger.LogDebug("Adding offer " + sdpOffer);
+            this.logger.LogDebug("Adding offer \n" + sdpOffer);
             var endpoint = await GetKurentoEndpointAsync();
             var sdpAnswer = await endpoint.ProcessOfferAsync(sdpOffer);
 
@@ -56,7 +80,7 @@ namespace signaling.hubs
         private async Task<WebRtcEndpoint> GetKurentoEndpointAsync()
         {
             WebRtcEndpoint endpoint = null;
-            if(this.Context.Items.ContainsKey("kurento_endpoint")
+            if (this.Context.Items.ContainsKey("kurento_endpoint")
             && this.Context.Items.TryGetValue("kurento_endpoint", out object endpointObj))
             {
                 return (WebRtcEndpoint)endpointObj;
@@ -77,6 +101,11 @@ namespace signaling.hubs
 
             await endpoint.ConnectAsync(endpoint);
 
+            RecorderEndpoint recorder = await this.kurento.CreateAsync(new RecorderEndpoint(pipeline, "file:///tmp/1.webm", MediaProfileSpecType.WEBM_VIDEO_ONLY));
+            recorder.Recording += (e) => this.logger.LogInformation("Recording"); 
+            this.Context.Items.Add("recorder_endpoint", recorder);
+            await endpoint.ConnectAsync(recorder, MediaType.VIDEO, "default", "default");
+            await recorder.RecordAsync();
             return endpoint;
         }
         #endregion

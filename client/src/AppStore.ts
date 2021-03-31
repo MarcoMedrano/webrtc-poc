@@ -20,7 +20,7 @@ class AppStore {
   private connection: signalR.HubConnection | null = null;
   private rtcPeerConnection: RTCPeerConnection | null = null;
 
-  public onRemoteTrack: null | ((ms:MediaStream)=> void) = null
+  public onRemoteTrack: null | ((ms: MediaStream) => void) = null;
 
   public connect = (stream: MediaStream): Promise<void> => {
     return new Promise<void>(async (resolve, reject) => {
@@ -40,13 +40,21 @@ class AppStore {
         this.connection.on("Pong", () => console.log("Pong"));
 
         await this.connection.invoke("Ping");
-        this.startIceNegotiation(stream);
+        await this.startIceNegotiation(stream);
         resolve();
       } catch (e) {
         console.error("Error with Signaling Server", e);
         reject();
       }
     });
+  };
+
+  public startRecording = async () => {
+    await this.connection!.invoke("Start");
+  };
+
+  public stopRecording = async () => {
+    await this.connection!.invoke("Stop");
   };
 
   private startIceNegotiation = async (stream: MediaStream) => {
@@ -61,14 +69,21 @@ class AppStore {
     console.log("TRACKs", stream.getTracks());
     this.rtcPeerConnection = new RTCPeerConnection(config);
     this.rtcPeerConnection.ontrack = this.onTrack;
-    this.rtcPeerConnection.addEventListener("track", e => {
-      this.onTrack(e);
-    }, false);
+    this.rtcPeerConnection.addEventListener(
+      "track",
+      (e) => {
+        this.onTrack(e);
+      },
+      false
+    );
     this.rtcPeerConnection.addTrack(stream.getTracks()[0]);
     this.rtcPeerConnection.onicecandidate = (event) => {
       console.log("onicecandidate", event);
       if (event.candidate) {
-        this.connection?.invoke("AddIceCandidate", JSON.stringify(event.candidate));
+        this.connection?.invoke(
+          "AddIceCandidate",
+          JSON.stringify(event.candidate)
+        );
       }
     };
 
@@ -97,12 +112,12 @@ class AppStore {
 
     // var stream = this.rtcPeerConnection.trac?.()[0]
     // this.onRemoteTrack!(stream);
-  }
+  };
 
   private onTrack = (event: RTCTrackEvent) => {
-    console.log('AppStore.onTrack', event);
-    this.onRemoteTrack!(event.streams[0])
-  }
+    console.log("AppStore.onTrack", event);
+    this.onRemoteTrack!(event.streams[0]);
+  };
 }
 
 export default new AppStore();

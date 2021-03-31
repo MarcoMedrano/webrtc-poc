@@ -97,7 +97,7 @@ class App extends React.Component<AppProps> {
               video: { width: 360, height: 240 },
             });
 
-            // this.videoRef!.srcObject = stream;
+            this.videoRef!.srcObject = stream;
 
             AppStore.connect(stream);
             AppStore.onRemoteTrack = (stream: MediaStream) => {
@@ -106,6 +106,24 @@ class App extends React.Component<AppProps> {
           }}
         >
           CONNECT
+        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={async () => {
+            AppStore.startRecording();
+          }}
+        >
+          RECORD
+        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={async () => {
+            AppStore.stopRecording();
+          }}
+        >
+          STOP RECORDING
         </Button>
         <video ref={(video) => (this.videoRef = video)} autoPlay />
         <video ref={(video) => (this.peerVideoRef = video)} autoPlay />
