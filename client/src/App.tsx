@@ -92,10 +92,12 @@ class App extends React.Component<AppProps> {
           variant="contained"
           color="primary"
           onClick={async () => {
-            const stream = await navigator.mediaDevices.getUserMedia({
-              audio: false,
-              video: { width: 360, height: 240 },
-            });
+            // const stream = await navigator.mediaDevices.getUserMedia({
+            //   audio: false,
+            //   video: { width: 360, height: 240 },
+            // });
+            // @ts-ignore next-line
+            const stream = await navigator.mediaDevices.getDisplayMedia({audio:true, video: true});
 
             this.videoRef!.srcObject = stream;
 
