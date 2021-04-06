@@ -2,39 +2,19 @@
   "name": "client",
   "version": "0.1.0",
   "private": true,
-  "dependencies": {
-    "@material-ui/core": "^4.11.3",
-    "@material-ui/icons": "^4.11.2",
-    "@microsoft/signalr": "^5.0.4",
-    "@microsoft/signalr-protocol-msgpack": "^5.0.4",
-    "@testing-library/jest-dom": "^5.11.4",
-    "@testing-library/react": "^11.1.0",
-    "@testing-library/user-event": "^13.0.15",
-    "@types/jest": "^26.0.21",
-    "@types/node": "^14.14.35",
-    "@types/react": "^17.0.3",
-    "@types/react-dom": "^17.0.3",
-    "mobx": "6.0.0",
-    "mobx-react": "6.3.0",
-    "peerjs": "^1.3.2",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "react-scripts": "4.0.3",
-    "strongly-typed-events": "^2.1.5",
-    "typescript": "^4.2.3",
-    "web-vitals": "^1.1.1"
-  },
+  "author": "Talkdesk",
+  "main": "public/electron.js",
+  "homepage": "./",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start:server": "rescripts start",
+    "build": "rescripts build",
+    "test": "CI=true rescripts test",
+    "eject": "react-scripts eject",
+    "start": "concurrently \"BROWSER=none yarn start:server\" \"wait-on http://localhost:3000 && electron .\"",
+    "start:s3Proxy": "PROXY_S3=true yarn start"
   },
   "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "extends": "react-app"
   },
   "browserslist": {
     "production": [
@@ -47,5 +27,39 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@rescripts/cli": "0.0.14",
+    "@rescripts/rescript-env": "0.0.12",
+    "@types/jest": "25.2.1",
+    "@types/react": "16.9.34",
+    "@types/react-dom": "16.9.6",
+    "@types/uuid": "7.0.3",
+    "axios": "0.19.2",
+    "axios-case-converter": "0.6.0",
+    "concurrently": "5.1.0",
+    "electron-builder": "22.5.1",
+    "electron-is-dev": "1.2.0",
+    "react-scripts": "3.4.1",
+    "typescript": "3.8.3",
+    "uuid": "8.0.0",
+    "wait-on": "4.0.2"
+  },
+  "dependencies": {
+    "@microsoft/signalr": "^5.0.4",
+    "@microsoft/signalr-protocol-msgpack": "^5.0.4",
+    "@material-ui/core": "^4.9.14",
+    "@material-ui/icons": "^4.9.1",
+    "@material-ui/lab": "^4.0.0-alpha.53",
+    "mobx": "^5.15.4",
+    "mobx-react": "^6.2.2",
+    "aws-sdk": "2.682.0",
+    "axios": "0.19.2",
+    "electron": "8.5.3",
+    "iohook": "0.6.6",
+    "react": "16.13.1",
+    "react-digital-clock": "^0.1.2",
+    "react-dom": "16.13.1",
+    "request": "^2.88.2"
   }
 }
