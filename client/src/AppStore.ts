@@ -7,7 +7,7 @@ class AppStore {
   @observable public stunList = "stun:stun.l.google.com:19302";
   // `stun:stun.l.google.com:19302` + `\nstun:stun1.l.google.com:19302`;
 
-  @observable public signalingServer = "https://localhost:5001/recording";
+  @observable public signalingServer = "http://localhost:5000/recording";
 
   @observable public uiMessages = observable([]) as any;
   @observable public stream: MediaStream | null = null;

@@ -4,18 +4,18 @@ import {
   AccordionSummary,
   Theme,
   createStyles,
-  FormControlLabel,
   withStyles,
   WithStyles,
   Button,
-  Typography,
   AccordionDetails,
-  Divider,
 } from "@material-ui/core";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import { TextField } from "@material-ui/core";
 import { observer } from "mobx-react";
 import AppStore from "./AppStore";
+// import isElectron from 'is-electron';
+
+import { desktopCapturer, remote } from "electron";
 
 const styles = ({ spacing, palette }: Theme) =>
   createStyles({
@@ -92,15 +92,31 @@ class App extends React.Component<AppProps> {
           variant="contained"
           color="primary"
           onClick={async () => {
-            // const stream = await navigator.mediaDevices.getUserMedia({
-            //   audio: false,
-            //   video: { width: 360, height: 240 },
-            // });
-            // @ts-ignore next-line
-            const stream = await navigator.mediaDevices.getDisplayMedia({audio:true, video: true});
+            const sources = await desktopCapturer.getSources({
+              types: ["screen"],
+            });
+            const display = remote.screen.getPrimaryDisplay();
+            const source = sources.find((s: any) => s.id.includes(display.id));
+
+            console.log("CLICK", source);
+            const constrains = {
+              audio: false,
+              video: {
+                mandatory: {
+                  chromeMediaSource: "desktop",
+                  chromeMediaSourceId: source!.id,
+                  maxWidth: display.bounds.width * 0.25,
+                  maxHeight: display.bounds.height * 0.25,
+                },
+              },
+            };
+            // const stream = await navigator.mediaDevices.getDisplayMedia({audio:false});
+            const stream = await navigator.mediaDevices.getUserMedia(
+              // @ts-ignore next-line
+              constrains
+            );
 
             this.videoRef!.srcObject = stream;
-
             AppStore.connect(stream);
             AppStore.onRemoteTrack = (stream: MediaStream) => {
               this.peerVideoRef!.srcObject = stream;
@@ -127,7 +143,14 @@ class App extends React.Component<AppProps> {
         >
           STOP RECORDING
         </Button>
+        <br />
+        <br />
+        LOCAL
+        <br />
         <video ref={(video) => (this.videoRef = video)} autoPlay />
+        <br />
+        MIRRORED (REMOTE)
+        <br />
         <video ref={(video) => (this.peerVideoRef = video)} autoPlay />
       </div>
     );
