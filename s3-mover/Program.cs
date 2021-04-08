@@ -31,7 +31,8 @@ namespace s3_mover
             watcher.EnableRaisingEvents = true;
 
             Console.WriteLine("Watching folder " + watcher.Path);
-            Console.ReadKey();
+            Console.WriteLine("Bucket " + Environment.GetEnvironmentVariable("AWS_BUCKET_NAME"));
+            Console.Read();
         }
 
         private static async void OnChanged(object sender, FileSystemEventArgs e)
