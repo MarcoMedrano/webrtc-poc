@@ -1,10 +1,11 @@
 ﻿using System;
 using System.IO;
-using System.Reflection;
+using System.Linq;
 using System.Threading.Tasks;
 using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Microsoft.Extensions.FileProviders;
 
 /// <summary>
 /// This program will upload to S3 the file created in the specified path in arguments.
@@ -19,16 +20,27 @@ namespace s3_mover
 {
     class Program
     {
+        private const string FILTER = "*.webm";
+        private static string path = string.Empty;
+
         static void Main(string[] args)
         {
             Console.WriteLine("S3 Mover ");
+            path = args.Length > 0 ? args[0] : Environment.CurrentDirectory;
 
-            var watcher = new FileSystemWatcher();
-            watcher.Path = args.Length > 0 ? args[0] : Environment.CurrentDirectory;
-            watcher.NotifyFilter = NotifyFilters.LastWrite;
-            watcher.Filter = "*.webm";
+            // var watcher = new FileSystemWatcher();
+            // watcher.Path = path;
+            // watcher.NotifyFilter = NotifyFilters.LastWrite;
+            // watcher.Filter = FILTER;
+            // watcher.Changed += OnChanged;
+            // watcher.EnableRaisingEvents = true;
+
+            // FileSystemWatcher not working in Docker image other than the MS one.
+            // so had to implement soemthing more manual
+            var watcher = new FileWatcher();
+            watcher.Path = path;
+            watcher.Filter = FILTER;
             watcher.Changed += OnChanged;
-            watcher.EnableRaisingEvents = true;
 
             Console.WriteLine("Watching folder " + watcher.Path);
             Console.WriteLine("Bucket " + Environment.GetEnvironmentVariable("AWS_BUCKET_NAME"));
@@ -37,7 +49,7 @@ namespace s3_mover
 
         private static async void OnChanged(object sender, FileSystemEventArgs e)
         {
-            Console.WriteLine($"{e.Name} {e.ChangeType}");
+            Console.WriteLine($"Changed {e.Name} {e.ChangeType}");
             await UploadFileAsync(e.Name, e.FullPath);
         }
 
