@@ -1,0 +1,10 @@
+﻿{
+  "profiles": {
+    "s3_mover": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

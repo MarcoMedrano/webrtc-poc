@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 class FileWatcher
@@ -21,27 +22,42 @@ class FileWatcher
     /// </summary>
     public FileWatcher()
     {
-        Task.Run(this.CheckForFileChanges);
+        var task = Task.Run(this.CheckForFileChanges);
+        System.Console.WriteLine($"Task scheduled with id {task.Id}, current thread {Thread.CurrentThread.ManagedThreadId}");
     }
 
     private async void CheckForFileChanges()
     {
-        var directory = new DirectoryInfo(this.Path);
-        var numberOfFiles = directory.GetFiles(this.Filter).Count();
-
-        while (true)
+        System.Console.WriteLine("CheckForFileChanges running on thread " + Thread.CurrentThread.ManagedThreadId);
+        try
         {
-            var files = directory.GetFiles(this.Filter);
-            var newNumberOfFiles = files.Count();
+            var directory = new DirectoryInfo(this.Path);
+            var numberOfFiles = directory.GetFiles(this.Filter).Count();
 
-            if (newNumberOfFiles > numberOfFiles)
+            while (true)
             {
-                var file = files.OrderByDescending(f => f.LastWriteTime).First();
-                await this.WaitUntilFileNotLocked(file);
-                this.Changed!.Invoke(this, new FileSystemEventArgs(WatcherChangeTypes.Created, file.Directory.FullName, file.Name));
-            }
+                System.Console.WriteLine("checking for new files");
+                var files = directory.GetFiles(this.Filter);
+                var newNumberOfFiles = files.Count();
 
-            numberOfFiles = newNumberOfFiles;
+                if (newNumberOfFiles > numberOfFiles)
+                {
+                    var file = files.OrderByDescending(f => f.LastWriteTime).First();
+                    await this.WaitUntilFileNotLocked(file);
+                    this.Changed!.Invoke(this, new FileSystemEventArgs(WatcherChangeTypes.Created, file.Directory.FullName, file.Name));
+                }
+                else
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                }
+
+                numberOfFiles = newNumberOfFiles;
+            }
+        }
+        catch (System.Exception e)
+        {
+            System.Console.WriteLine("Error on FileWatcher " + e.Message);
+            throw;
         }
     }
 
