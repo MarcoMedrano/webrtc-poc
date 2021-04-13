@@ -16,6 +16,7 @@ import AppStore from "./AppStore";
 // import isElectron from 'is-electron';
 
 import { desktopCapturer, remote } from "electron";
+import Timer from "react-compound-timer";
 
 const styles = ({ spacing, palette }: Theme) =>
   createStyles({
@@ -88,61 +89,83 @@ class App extends React.Component<AppProps> {
           </AccordionDetails>
         </Accordion>
         <br />
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={async () => {
-            const sources = await desktopCapturer.getSources({
-              types: ["screen"],
-            });
-            const display = remote.screen.getPrimaryDisplay();
-            const source = sources.find((s: any) => s.id.includes(display.id));
+        <br />
+        <h1>
+          <Timer
+            startImmediately={false}
+            formatValue={(value) => `${value < 10 ? `0${value}` : value}`}
+          >
+            {(timer: any) => (
+              <React.Fragment>
+                <div>
+                  <Timer.Hours />:<Timer.Minutes />:<Timer.Seconds />
+                </div>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={async () => {
+                    timer.start();
+                    const sources = await desktopCapturer.getSources({
+                      types: ["screen"],
+                    });
+                    const display = remote.screen.getPrimaryDisplay();
+                    const source = sources.find((s: any) =>
+                      s.id.includes(display.id)
+                    );
 
-            console.log("CLICK", source);
-            const constrains = {
-              audio: false,
-              video: {
-                mandatory: {
-                  chromeMediaSource: "desktop",
-                  chromeMediaSourceId: source!.id,
-                  maxWidth: display.bounds.width * 0.25,
-                  maxHeight: display.bounds.height * 0.25,
-                },
-              },
-            };
-            // const stream = await navigator.mediaDevices.getDisplayMedia({audio:false});
-            const stream = await navigator.mediaDevices.getUserMedia(
-              // @ts-ignore next-line
-              constrains
-            );
+                    console.log("CLICK", source);
+                    const constrains = {
+                      audio: false,
+                      video: {
+                        mandatory: {
+                          chromeMediaSource: "desktop",
+                          chromeMediaSourceId: source!.id,
+                          maxWidth: display.bounds.width * 1,
+                          maxHeight: display.bounds.height * 1,
+                          maxFrameRate: 5,
+                          minFrameRate: 1,
+                        },
+                      },
+                    };
+                    // const stream = await navigator.mediaDevices.getDisplayMedia({audio:false});
+                    const stream = await navigator.mediaDevices.getUserMedia(
+                      // @ts-ignore next-line
+                      constrains
+                    );
 
-            this.videoRef!.srcObject = stream;
-            AppStore.connect(stream);
-            AppStore.onRemoteTrack = (stream: MediaStream) => {
-              this.peerVideoRef!.srcObject = stream;
-            };
-          }}
-        >
-          CONNECT
-        </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={async () => {
-            AppStore.startRecording();
-          }}
-        >
-          RECORD
-        </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={async () => {
-            AppStore.stopRecording();
-          }}
-        >
-          STOP RECORDING
-        </Button>
+                    this.videoRef!.srcObject = stream;
+                    AppStore.connect(stream);
+                    AppStore.onRemoteTrack = (stream: MediaStream) => {
+                      this.peerVideoRef!.srcObject = stream;
+                    };
+                  }}
+                >
+                  CONNECT
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={async () => {
+                    AppStore.startRecording();
+                  }}
+                >
+                  RECORD
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={async () => {
+                    timer.stop();
+                    AppStore.stopRecording();
+                  }}
+                >
+                  STOP RECORDING
+                </Button>
+                <br />
+              </React.Fragment>
+            )}
+          </Timer>
+        </h1>
         <br />
         <br />
         LOCAL
