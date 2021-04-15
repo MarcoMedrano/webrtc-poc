@@ -101,7 +101,7 @@ namespace signaling.hubs
 
             await endpoint.ConnectAsync(endpoint);
 
-            RecorderEndpoint recorder = await this.kurento.CreateAsync(new RecorderEndpoint(pipeline, "file:///tmp/1.webm", MediaProfileSpecType.WEBM_VIDEO_ONLY));
+            RecorderEndpoint recorder = await this.kurento.CreateAsync(new RecorderEndpoint(pipeline, "file:///tmp/17.webm", MediaProfileSpecType.WEBM_VIDEO_ONLY));
             recorder.Recording += (e) => this.logger.LogInformation("Recording"); 
             this.Context.Items.Add("recorder_endpoint", recorder);
             await endpoint.ConnectAsync(recorder, MediaType.VIDEO, "default", "default");

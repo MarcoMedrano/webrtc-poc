@@ -98,7 +98,7 @@ class App extends React.Component<AppProps> {
             {(timer: any) => (
               <React.Fragment>
                 <div>
-                  <Timer.Hours />:<Timer.Minutes />:<Timer.Seconds />
+                  {/* <Timer.Hours />:<Timer.Minutes />:<Timer.Seconds /> */}
                 </div>
                 <Button
                   variant="contained"
@@ -120,8 +120,8 @@ class App extends React.Component<AppProps> {
                         mandatory: {
                           chromeMediaSource: "desktop",
                           chromeMediaSourceId: source!.id,
-                          maxWidth: display.bounds.width * 1,
-                          maxHeight: display.bounds.height * 1,
+                          maxWidth: display.bounds.width * 0.25,
+                          maxHeight: display.bounds.height * 0.25,
                           maxFrameRate: 5,
                           minFrameRate: 1,
                         },

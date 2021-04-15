@@ -4,7 +4,8 @@ import { MessagePackHubProtocol } from "@microsoft/signalr-protocol-msgpack";
 import * as signalR from "@microsoft/signalr";
 class AppStore {
   @observable public connected = false;
-  @observable public stunList = "stun:stun.l.google.com:19302";
+  @observable public stunList = "stun:localhost:3478";
+  // @observable public stunList = "stun:stun.l.google.com:19302";
   // `stun:stun.l.google.com:19302` + `\nstun:stun1.l.google.com:19302`;
 
   @observable public signalingServer = "http://localhost:5000/recording";
