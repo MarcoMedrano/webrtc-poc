@@ -8,6 +8,6 @@ stun.request(stunServer, (err, res) => {
         console.error(err);
     } else {
         const address = res.getXorAddress();
-        console.log('your ip', address);
+        console.log('XOR Address', address);
     }
 });
