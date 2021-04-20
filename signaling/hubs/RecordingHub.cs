@@ -9,6 +9,7 @@ namespace signaling.hubs
 {
     public class RecordingHub : DynamicHub
     {
+        private static int recordingNumber = 100;
         private readonly KurentoClient kurento;
         private readonly ILogger<RecordingHub> logger;
 
@@ -61,14 +62,14 @@ namespace signaling.hubs
         public async Task AddIceCandidate(string candidateStr /*IceCandidate candidate*/)
         {
             var candidate = JsonConvert.DeserializeObject<IceCandidate>(candidateStr);
-            this.logger.LogDebug("Adding candidate " + JsonConvert.SerializeObject(candidate));
+            this.logger.LogDebug("Adding remote candidate " + JsonConvert.SerializeObject(candidate));
             var endpoint = await this.GetKurentoEndpointAsync();
             await endpoint.AddIceCandidateAsync(candidate);
 
         }
         public async Task AddSdp(string sdpOffer)
         {
-            this.logger.LogDebug("Adding offer \n" + sdpOffer);
+            this.logger.LogDebug("Adding remote offer \n" + sdpOffer);
             var endpoint = await GetKurentoEndpointAsync();
             var sdpAnswer = await endpoint.ProcessOfferAsync(sdpOffer);
 
@@ -101,7 +102,7 @@ namespace signaling.hubs
 
             await endpoint.ConnectAsync(endpoint);
 
-            RecorderEndpoint recorder = await this.kurento.CreateAsync(new RecorderEndpoint(pipeline, "file:///tmp/17.webm", MediaProfileSpecType.WEBM_VIDEO_ONLY));
+            RecorderEndpoint recorder = await this.kurento.CreateAsync(new RecorderEndpoint(pipeline, $"file:///tmp/{recordingNumber++}.webm", MediaProfileSpecType.WEBM_VIDEO_ONLY));
             recorder.Recording += (e) => this.logger.LogInformation("Recording"); 
             this.Context.Items.Add("recorder_endpoint", recorder);
             await endpoint.ConnectAsync(recorder, MediaType.VIDEO, "default", "default");

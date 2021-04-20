@@ -4,7 +4,7 @@ import { MessagePackHubProtocol } from "@microsoft/signalr-protocol-msgpack";
 import * as signalR from "@microsoft/signalr";
 class AppStore {
   @observable public connected = false;
-  @observable public stunList = "stun:localhost:3478";
+  @observable public stunList = "turn:3.86.44.157:3478";
   // @observable public stunList = "stun:stun.l.google.com:19302";
   // `stun:stun.l.google.com:19302` + `\nstun:stun1.l.google.com:19302`;
 
@@ -61,7 +61,7 @@ class AppStore {
   private startIceNegotiation = async (stream: MediaStream) => {
     const config = {
       iceServers: this.stunList.split("\n").map((s) => {
-        return { urls: s };
+        return { urls: s, credential:'1234', username:'tdx' };
       }),
       // sdpSemantics: "unified-plan",
     };
@@ -79,8 +79,8 @@ class AppStore {
     );
     this.rtcPeerConnection.addTrack(stream.getTracks()[0]);
     this.rtcPeerConnection.onicecandidate = (event) => {
-      console.log("onicecandidate", event);
-      if (event.candidate) {
+      console.log("onicecandidate", event.candidate);
+        if (event.candidate && event.candidate.type === "relay") {
         this.connection?.invoke(
           "AddIceCandidate",
           JSON.stringify(event.candidate)
