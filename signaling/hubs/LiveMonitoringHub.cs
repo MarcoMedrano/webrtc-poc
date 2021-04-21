@@ -39,13 +39,13 @@ namespace signaling.hubs
         public async Task AddOffer(string sdp)
         {
             this.logger.LogDebug("Adding offer \n" + sdp);
-            await this.Clients.Others.ProcessOffer(sdp);
+            await this.Clients.Others.processOffer(sdp);
         }
 
         public async Task AddAnswer(string sdp)
         {
             this.logger.LogDebug("Adding answer \n" + sdp);
-            await this.Clients.Others.ProcessAnswer(sdp);
+            await this.Clients.Others.processAnswer(sdp);
         }
 
         #endregion

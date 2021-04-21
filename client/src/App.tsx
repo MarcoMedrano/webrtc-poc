@@ -14,9 +14,8 @@ import {
 import { TextField } from "@material-ui/core";
 import { observer } from "mobx-react";
 import AppStore from "./AppStore";
-// import isElectron from 'is-electron';
+import isElectron from "is-electron";
 
-import { desktopCapturer, remote } from "electron";
 import Timer from "react-compound-timer";
 
 const styles = ({ spacing, palette }: Theme) =>
@@ -45,8 +44,8 @@ interface AppProps extends WithStyles<typeof styles> {}
 
 @observer
 class App extends React.Component<AppProps> {
-  private videoRef: HTMLVideoElement | null = null;
-  private peerVideoRef: HTMLVideoElement | null = null;
+  private localVideo: HTMLVideoElement | null = null;
+  private remoteVideo: HTMLVideoElement | null = null;
 
   public render() {
     return (
@@ -85,18 +84,18 @@ class App extends React.Component<AppProps> {
             style={{ padding: 8 }}
             label="user"
             variant="outlined"
-            value={AppStore.user}
+            value={AppStore.turnUser}
             onChange={(e) => {
-              AppStore.user = e.target.value;
+              AppStore.turnUser = e.target.value;
             }}
           />
           <TextField
             style={{ padding: 8 }}
             label="password"
             variant="outlined"
-            value={AppStore.password}
+            value={AppStore.TurnPassword}
             onChange={(e) => {
-              AppStore.password = e.target.value;
+              AppStore.TurnPassword = e.target.value;
             }}
           />
         </Grid>
@@ -123,38 +122,23 @@ class App extends React.Component<AppProps> {
                   color="primary"
                   onClick={async () => {
                     timer.start();
-                    const sources = await desktopCapturer.getSources({
-                      types: ["screen"],
-                    });
-                    const display = remote.screen.getPrimaryDisplay();
-                    const source = sources.find((s: any) =>
-                      s.id.includes(display.id)
-                    );
+                    let ScreenCapture = null;
+                    console.log("Is Electron ", isElectron());
 
-                    console.log("CLICK", source);
-                    const constrains = {
-                      audio: false,
-                      video: {
-                        mandatory: {
-                          chromeMediaSource: "desktop",
-                          chromeMediaSourceId: source!.id,
-                          maxWidth: display.bounds.width * 0.25,
-                          maxHeight: display.bounds.height * 0.25,
-                          maxFrameRate: 5,
-                          minFrameRate: 1,
-                        },
-                      },
-                    };
-                    // const stream = await navigator.mediaDevices.getDisplayMedia({audio:false});
-                    const stream = await navigator.mediaDevices.getUserMedia(
-                      // @ts-ignore next-line
-                      constrains
-                    );
+                    if (isElectron()) {
+                      ScreenCapture = require("./ElectronScreenCapture")
+                        .default;
+                    } else {
+                      ScreenCapture = require("./BrowserScreenCapture").default;
+                    }
 
-                    this.videoRef!.srcObject = stream;
+                    const stream = await ScreenCapture.getStream();
+
+                    if (AppStore.isCallbar)
+                      this.localVideo!.srcObject = stream;
                     AppStore.connect(stream);
                     AppStore.onRemoteTrack = (stream: MediaStream) => {
-                      this.peerVideoRef!.srcObject = stream;
+                      this.remoteVideo!.srcObject = stream;
                     };
                   }}
                 >
@@ -196,13 +180,13 @@ class App extends React.Component<AppProps> {
           <>
             LOCAL
             <br />
-            <video ref={(video) => (this.videoRef = video)} autoPlay />
+            <video ref={(video) => (this.localVideo = video)} autoPlay />
             <br />
           </>
         )}
         REMOTE
         <br />
-        <video ref={(video) => (this.peerVideoRef = video)} autoPlay />
+        <video ref={(video) => (this.remoteVideo = video)} autoPlay />
       </div>
     );
   }

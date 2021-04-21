@@ -67,13 +67,13 @@ namespace signaling.hubs
             await endpoint.AddIceCandidateAsync(candidate);
 
         }
-        public async Task AddSdp(string sdpOffer)
+        public async Task AddOffer(string sdpOffer)
         {
             this.logger.LogDebug("Adding remote offer \n" + sdpOffer);
             var endpoint = await GetKurentoEndpointAsync();
             var sdpAnswer = await endpoint.ProcessOfferAsync(sdpOffer);
 
-            await Clients.Caller.AddRemoteSdp(sdpAnswer);
+            await Clients.Caller.processAnswer(sdpAnswer);
 
             await endpoint.GatherCandidatesAsync();
         }

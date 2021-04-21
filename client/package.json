@@ -6,6 +6,7 @@
   "main": "public/electron.js",
   "homepage": "./",
   "scripts": {
+    "start2": "react-scripts start",
     "start:server": "rescripts start",
     "build": "rescripts build",
     "test": "CI=true rescripts test",
@@ -54,6 +55,7 @@
     "axios": "0.19.2",
     "electron": "8.5.3",
     "iohook": "0.6.6",
+    "is-electron": "^2.2.0",
     "mobx": "^5.15.4",
     "mobx-react": "^6.2.2",
     "react": "16.13.1",

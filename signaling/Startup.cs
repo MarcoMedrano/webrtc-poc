@@ -46,6 +46,7 @@ namespace signaling
                 });
 
                 endpoints.MapHub<RecordingHub>("/recording");
+                endpoints.MapHub<LiveMonitoringHub>("/liveMonitoring");
             });
         }
     }

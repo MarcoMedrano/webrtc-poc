@@ -6,33 +6,28 @@ class AppStore {
   @observable public emulationType = 'callbar';
   @observable public connected = false;
   @observable public stunOrTurn = "turn:3.86.44.157:3478";
-  @observable public user = "tdx";
-  @observable public password = "1234";
+  @observable public turnUser = "tdx";
+  @observable public TurnPassword = "1234";
   // @observable public stunList = "stun:stun.l.google.com:19302";
   // `stun:stun.l.google.com:19302` + `\nstun:stun1.l.google.com:19302`;
 
-  @observable public signalingServer = "http://localhost:5000/recording";
+  @observable public signalingServer = "http://localhost:5000";
 
-  @observable public uiMessages = observable([]) as any;
-  @observable public stream: MediaStream | null = null;
-  @observable communicationValues = observable([
-    "chat",
-    "screen",
-    "call",
-  ]) as any;
 
   private connection: signalR.HubConnection | null = null;
   private rtcPeerConnection: RTCPeerConnection | null = null;
 
   public onRemoteTrack: null | ((ms: MediaStream) => void) = null;
 
+  public get isCallbar() { return this.emulationType === 'callbar' }
+
   public connect = (stream: MediaStream): Promise<void> => {
     return new Promise<void>(async (resolve, reject) => {
       this.connection = new signalR.HubConnectionBuilder()
-        .withUrl(this.signalingServer)
-        .configureLogging(signalR.LogLevel.Information)
+        .withUrl(this.signalingServer + (this.emulationType === 'callbar' ? '/recording' : '/liveMonitoring'))
+        .configureLogging(signalR.LogLevel.Debug)
         //.withHubProtocol(new MessagePackHubProtocol())
-        .withAutomaticReconnect()
+        //.withAutomaticReconnect()
         .build();
 
       try {
@@ -40,7 +35,8 @@ class AppStore {
         console.log("Connected to Signaling Server");
 
         this.connection.on("AddRemoteIceCandidate", this.addRemoteIceCandidate);
-        this.connection.on("AddRemoteSdp", this.addRemoteSdp);
+        this.connection.on("processAnswer", this.processAnswer);
+        this.connection.on("processOffer", this.processOffer);
         this.connection.on("Pong", () => console.log("Pong"));
 
         await this.connection.invoke("Ping");
@@ -64,7 +60,7 @@ class AppStore {
   private startIceNegotiation = async (stream: MediaStream) => {
     const config = {
       iceServers: this.stunOrTurn.split("\n").map((s) => {
-        return { urls: s, credential:'1234', username:'tdx' };
+        return { urls: s, credential: this.TurnPassword, username: this.turnUser };
       }),
       // sdpSemantics: "unified-plan",
     };
@@ -83,7 +79,7 @@ class AppStore {
     this.rtcPeerConnection.addTrack(stream.getTracks()[0]);
     this.rtcPeerConnection.onicecandidate = (event) => {
       console.log("onicecandidate", event.candidate);
-        if (event.candidate && event.candidate.type === "relay") {
+      if (event.candidate && event.candidate.type === "relay") {
         this.connection?.invoke(
           "AddIceCandidate",
           JSON.stringify(event.candidate)
@@ -97,7 +93,7 @@ class AppStore {
     }*/);
 
     await this.rtcPeerConnection.setLocalDescription(offer);
-    await this.connection?.invoke("AddSdp", offer.sdp);
+    await this.connection?.invoke("AddOffer", offer.sdp);
   };
 
   private addRemoteIceCandidate(candidate: string) {
@@ -108,7 +104,7 @@ class AppStore {
     );
   }
 
-  private addRemoteSdp = async (sdpAnswer: string) => {
+  private processAnswer = async (sdpAnswer: string) => {
     console.log("addRemoteSdp ", sdpAnswer);
     await this.rtcPeerConnection?.setRemoteDescription(
       new RTCSessionDescription({ type: "answer", sdp: sdpAnswer })
@@ -116,6 +112,15 @@ class AppStore {
 
     // var stream = this.rtcPeerConnection.trac?.()[0]
     // this.onRemoteTrack!(stream);
+  };
+
+  private processOffer = async (sdpOffer: string) => {
+    // console.log("addRemoteSdp ", sdpOffer);
+    // await this.rtcPeerConnection?.setRemoteDescription(
+    //   new RTCSessionDescription({ type: "answer", sdp: sdpAnswer })
+    // );
+
+    // await this.connection?.invoke("AddAnswer", offer.sdp);
   };
 
   private onTrack = (event: RTCTrackEvent) => {
