@@ -10,8 +10,7 @@
     "build": "rescripts build",
     "test": "CI=true rescripts test",
     "eject": "react-scripts eject",
-    "start": "concurrently \"BROWSER=none yarn start:server\" \"wait-on http://localhost:3000 && electron .\"",
-    "start:s3Proxy": "PROXY_S3=true yarn start"
+    "start": "concurrently \"BROWSER=none yarn start:server\" \"wait-on http://localhost:3000 && electron .\""
   },
   "eslintConfig": {
     "extends": "react-app"

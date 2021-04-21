@@ -1,15 +1,16 @@
 import React from "react";
 import {
-  Accordion,
-  AccordionSummary,
   Theme,
   createStyles,
   withStyles,
   WithStyles,
   Button,
-  AccordionDetails,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Grid,
 } from "@material-ui/core";
-import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
+
 import { TextField } from "@material-ui/core";
 import { observer } from "mobx-react";
 import AppStore from "./AppStore";
@@ -50,45 +51,61 @@ class App extends React.Component<AppProps> {
   public render() {
     return (
       <div className="App">
-        <h2>CLIENT</h2>
-        <Accordion>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            STUN
-          </AccordionSummary>
-          <AccordionDetails>
-            <TextField
-              fullWidth
-              multiline
-              label="Urls"
-              variant="outlined"
-              value={AppStore.stunList}
-              onChange={(e) => {
-                console.log("Changing to ", e.target.value);
-                AppStore.stunList = e.target.value;
-              }}
-            />
-          </AccordionDetails>
-        </Accordion>
-        <Accordion>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            TURN
-          </AccordionSummary>
-          <AccordionDetails></AccordionDetails>
-        </Accordion>
-        <Accordion>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            Signaling
-          </AccordionSummary>
-          <AccordionDetails>
-            <TextField
-              fullWidth
-              label="Url"
-              variant="outlined"
-              value={AppStore.signalingServer}
-            />
-          </AccordionDetails>
-        </Accordion>
+        <RadioGroup
+          name="emulationType"
+          value={AppStore.emulationType}
+          onChange={(e) => {
+            AppStore.emulationType = e.target.value;
+          }}
+        >
+          <FormControlLabel
+            value="callbar"
+            control={<Radio />}
+            label="Callbar"
+          />
+          <FormControlLabel
+            value="live_monitoring"
+            control={<Radio />}
+            label="Live Monitoring"
+          />
+        </RadioGroup>
         <br />
+        <h3>STUN/TURN</h3>
+        <Grid container>
+          <TextField
+            style={{ padding: 8 }}
+            label="Url"
+            variant="outlined"
+            value={AppStore.stunOrTurn}
+            onChange={(e) => {
+              AppStore.stunOrTurn = e.target.value;
+            }}
+          />
+          <TextField
+            style={{ padding: 8 }}
+            label="user"
+            variant="outlined"
+            value={AppStore.user}
+            onChange={(e) => {
+              AppStore.user = e.target.value;
+            }}
+          />
+          <TextField
+            style={{ padding: 8 }}
+            label="password"
+            variant="outlined"
+            value={AppStore.password}
+            onChange={(e) => {
+              AppStore.password = e.target.value;
+            }}
+          />
+        </Grid>
+        <h3>SIGNALING</h3>
+        <TextField
+          label="Url"
+          variant="outlined"
+          value={AppStore.signalingServer}
+        />
         <br />
         <h1>
           <Timer
@@ -101,6 +118,7 @@ class App extends React.Component<AppProps> {
                   {/* <Timer.Hours />:<Timer.Minutes />:<Timer.Seconds /> */}
                 </div>
                 <Button
+                  style={{ margin: 4 }}
                   variant="contained"
                   color="primary"
                   onClick={async () => {
@@ -142,25 +160,31 @@ class App extends React.Component<AppProps> {
                 >
                   CONNECT
                 </Button>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={async () => {
-                    AppStore.startRecording();
-                  }}
-                >
-                  RECORD
-                </Button>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={async () => {
-                    timer.stop();
-                    AppStore.stopRecording();
-                  }}
-                >
-                  STOP RECORDING
-                </Button>
+                {AppStore.emulationType === "callbar" && (
+                  <>
+                    <Button
+                      style={{ margin: 4 }}
+                      variant="contained"
+                      color="primary"
+                      onClick={async () => {
+                        AppStore.startRecording();
+                      }}
+                    >
+                      START RECORDING
+                    </Button>
+                    <Button
+                      style={{ margin: 4 }}
+                      variant="contained"
+                      color="primary"
+                      onClick={async () => {
+                        timer.stop();
+                        AppStore.stopRecording();
+                      }}
+                    >
+                      STOP RECORDING
+                    </Button>
+                  </>
+                )}
                 <br />
               </React.Fragment>
             )}
@@ -168,11 +192,15 @@ class App extends React.Component<AppProps> {
         </h1>
         <br />
         <br />
-        LOCAL
-        <br />
-        <video ref={(video) => (this.videoRef = video)} autoPlay />
-        <br />
-        MIRRORED (REMOTE)
+        {AppStore.emulationType === "callbar" && (
+          <>
+            LOCAL
+            <br />
+            <video ref={(video) => (this.videoRef = video)} autoPlay />
+            <br />
+          </>
+        )}
+        REMOTE
         <br />
         <video ref={(video) => (this.peerVideoRef = video)} autoPlay />
       </div>

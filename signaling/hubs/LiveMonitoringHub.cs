@@ -36,15 +36,16 @@ namespace signaling.hubs
             this.Clients.Others.AddRemoteIceCandidate(JsonConvert.SerializeObject(candidate));
 
         }
-        public async Task AddSdp(string sdpOffer)
+        public async Task AddOffer(string sdp)
         {
-            this.logger.LogDebug("Adding offer \n" + sdpOffer);
-            var answers = await this.Clients.Others.ProcessOffer(sdpOffer);
+            this.logger.LogDebug("Adding offer \n" + sdp);
+            await this.Clients.Others.ProcessOffer(sdp);
+        }
 
-            for (int i = 0; i < answers.length; i++)
-            {
-                await Clients.Caller.AddRemoteSdp(answers[i]);
-            }
+        public async Task AddAnswer(string sdp)
+        {
+            this.logger.LogDebug("Adding answer \n" + sdp);
+            await this.Clients.Others.ProcessAnswer(sdp);
         }
 
         #endregion

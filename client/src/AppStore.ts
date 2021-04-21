@@ -1,10 +1,13 @@
 import { observable } from "mobx";
 
-import { MessagePackHubProtocol } from "@microsoft/signalr-protocol-msgpack";
+// import { MessagePackHubProtocol } from "@microsoft/signalr-protocol-msgpack";
 import * as signalR from "@microsoft/signalr";
 class AppStore {
+  @observable public emulationType = 'callbar';
   @observable public connected = false;
-  @observable public stunList = "turn:3.86.44.157:3478";
+  @observable public stunOrTurn = "turn:3.86.44.157:3478";
+  @observable public user = "tdx";
+  @observable public password = "1234";
   // @observable public stunList = "stun:stun.l.google.com:19302";
   // `stun:stun.l.google.com:19302` + `\nstun:stun1.l.google.com:19302`;
 
@@ -60,7 +63,7 @@ class AppStore {
 
   private startIceNegotiation = async (stream: MediaStream) => {
     const config = {
-      iceServers: this.stunList.split("\n").map((s) => {
+      iceServers: this.stunOrTurn.split("\n").map((s) => {
         return { urls: s, credential:'1234', username:'tdx' };
       }),
       // sdpSemantics: "unified-plan",
