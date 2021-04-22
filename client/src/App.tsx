@@ -47,14 +47,20 @@ class App extends React.Component<AppProps> {
   private localVideo: HTMLVideoElement | null = null;
   private remoteVideo: HTMLVideoElement | null = null;
 
+  public async componentDidMount() {
+    await AppStore.connect();
+  }
+
   public render() {
     return (
       <div className="App">
         <RadioGroup
-          name="emulationType"
+          name={AppStore.emulationType}
           value={AppStore.emulationType}
-          onChange={(e) => {
+          onChange={async (e) => {
             AppStore.emulationType = e.target.value;
+            await AppStore.disconnect()
+            await AppStore.connect()
           }}
         >
           <FormControlLabel
@@ -63,7 +69,7 @@ class App extends React.Component<AppProps> {
             label="Callbar"
           />
           <FormControlLabel
-            value="live_monitoring"
+            value={AppStore.emulationType}
             control={<Radio />}
             label="Live Monitoring"
           />
@@ -121,30 +127,34 @@ class App extends React.Component<AppProps> {
                   variant="contained"
                   color="primary"
                   onClick={async () => {
-                    timer.start();
-                    let ScreenCapture = null;
-                    console.log("Is Electron ", isElectron());
-
-                    if (isElectron()) {
-                      ScreenCapture = require("./ElectronScreenCapture")
-                        .default;
-                    } else {
-                      ScreenCapture = require("./BrowserScreenCapture").default;
-                    }
-
-                    const stream = await ScreenCapture.getStream();
-
-                    if (AppStore.isCallbar)
-                      this.localVideo!.srcObject = stream;
-                    AppStore.connect(stream);
                     AppStore.onRemoteTrack = (stream: MediaStream) => {
+                      console.log('Presenting remote track', stream);
+                      
                       this.remoteVideo!.srcObject = stream;
+                      this.remoteVideo!.onloadedmetadata = (e) => {
+                        this.remoteVideo!.play();
+                      };
+                      this.forceUpdate();
                     };
+                
+                    await this.setupStream();
+                  }}
+                >
+                  SETUP
+                </Button>
+                <Button
+                  style={{ margin: 4 }}
+                  variant="contained"
+                  color="primary"
+                  onClick={async () => {
+                    timer.start();
+
+                    await AppStore.startPeerConnection();
                   }}
                 >
                   CONNECT
                 </Button>
-                {AppStore.emulationType === "callbar" && (
+                {AppStore.isCallbar && (
                   <>
                     <Button
                       style={{ margin: 4 }}
@@ -176,7 +186,7 @@ class App extends React.Component<AppProps> {
         </h1>
         <br />
         <br />
-        {AppStore.emulationType === "callbar" && (
+        {AppStore.isCallbar && (
           <>
             LOCAL
             <br />
@@ -189,6 +199,24 @@ class App extends React.Component<AppProps> {
         <video ref={(video) => (this.remoteVideo = video)} autoPlay />
       </div>
     );
+  }
+
+  private async setupStream(){
+    let ScreenCapture = null;
+    console.log("Is Electron ", isElectron());
+
+    if (isElectron()) {
+      ScreenCapture = require("./ElectronScreenCapture")
+        .default;
+    } else {
+      ScreenCapture = require("./BrowserScreenCapture").default;
+    }
+
+    const stream = await ScreenCapture.getStream();
+
+    if (AppStore.isCallbar) this.localVideo!.srcObject = stream;
+
+    AppStore.stream = stream;
   }
 }
 

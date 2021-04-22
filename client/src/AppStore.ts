@@ -3,9 +3,9 @@ import { observable } from "mobx";
 // import { MessagePackHubProtocol } from "@microsoft/signalr-protocol-msgpack";
 import * as signalR from "@microsoft/signalr";
 class AppStore {
-  @observable public emulationType = 'callbar';
+  @observable public emulationType = '"live_monitoring"';
   @observable public connected = false;
-  @observable public stunOrTurn = "turn:3.86.44.157:3478";
+  @observable public stunOrTurn = "turn:54.224.85.62:3478";
   @observable public turnUser = "tdx";
   @observable public TurnPassword = "1234";
   // @observable public stunList = "stun:stun.l.google.com:19302";
@@ -13,21 +13,26 @@ class AppStore {
 
   @observable public signalingServer = "http://localhost:5000";
 
-
   private connection: signalR.HubConnection | null = null;
-  private rtcPeerConnection: RTCPeerConnection | null = null;
+  private pc: RTCPeerConnection | null = null;
 
   public onRemoteTrack: null | ((ms: MediaStream) => void) = null;
+  public stream: MediaStream | null = null;
 
-  public get isCallbar() { return this.emulationType === 'callbar' }
+  public get isCallbar() {
+    return this.emulationType === "callbar";
+  }
 
-  public connect = (stream: MediaStream): Promise<void> => {
+  public connect = (): Promise<void> => {
     return new Promise<void>(async (resolve, reject) => {
       this.connection = new signalR.HubConnectionBuilder()
-        .withUrl(this.signalingServer + (this.emulationType === 'callbar' ? '/recording' : '/liveMonitoring'))
+        .withUrl(
+          this.signalingServer +
+            (this.isCallbar ? "/recording" : "/liveMonitoring")
+        )
         .configureLogging(signalR.LogLevel.Debug)
         //.withHubProtocol(new MessagePackHubProtocol())
-        //.withAutomaticReconnect()
+        .withAutomaticReconnect()
         .build();
 
       try {
@@ -38,15 +43,19 @@ class AppStore {
         this.connection.on("processAnswer", this.processAnswer);
         this.connection.on("processOffer", this.processOffer);
         this.connection.on("Pong", () => console.log("Pong"));
+        this.connection.onreconnecting((e) => console.warn("Reconnecting ", e));
 
         await this.connection.invoke("Ping");
-        await this.startIceNegotiation(stream);
         resolve();
       } catch (e) {
         console.error("Error with Signaling Server", e);
         reject();
       }
     });
+  };
+
+  public disconnect = async () => {
+    this.connection?.stop();
   };
 
   public startRecording = async () => {
@@ -57,75 +66,80 @@ class AppStore {
     await this.connection!.invoke("Stop");
   };
 
-  private startIceNegotiation = async (stream: MediaStream) => {
-    const config = {
-      iceServers: this.stunOrTurn.split("\n").map((s) => {
-        return { urls: s, credential: this.TurnPassword, username: this.turnUser };
-      }),
-      // sdpSemantics: "unified-plan",
-    };
+  public startPeerConnection = async () => {
+    this.pc = this.createRtcPeerConnection();
 
-    console.log("Starting ICE negotiation with ", config);
-    console.log("TRACKs", stream.getTracks());
-    this.rtcPeerConnection = new RTCPeerConnection(config);
-    this.rtcPeerConnection.ontrack = this.onTrack;
-    this.rtcPeerConnection.addEventListener(
-      "track",
-      (e) => {
-        this.onTrack(e);
-      },
-      false
-    );
-    this.rtcPeerConnection.addTrack(stream.getTracks()[0]);
-    this.rtcPeerConnection.onicecandidate = (event) => {
-      console.log("onicecandidate", event.candidate);
-      if (event.candidate && event.candidate.type === "relay") {
-        this.connection?.invoke(
-          "AddIceCandidate",
-          JSON.stringify(event.candidate)
-        );
-      }
-    };
-
-    const offer = await this.rtcPeerConnection.createOffer(/*{
-      offerToReceiveAudio: true,
-      offerToReceiveVideo: true,
-    }*/);
-
-    await this.rtcPeerConnection.setLocalDescription(offer);
+    const offer = await this.pc.createOffer(/*{offerToReceiveAudio: true}*/);
+    await this.pc.setLocalDescription(offer);
     await this.connection?.invoke("AddOffer", offer.sdp);
   };
 
   private addRemoteIceCandidate(candidate: string) {
     console.log("addRemoteIceCandidate ", candidate);
     // TODO arriving string, check if need to be an object instead
-    this.rtcPeerConnection?.addIceCandidate(
-      new RTCIceCandidate(JSON.parse(candidate))
-    );
+    this.pc?.addIceCandidate(new RTCIceCandidate(JSON.parse(candidate)));
   }
 
-  private processAnswer = async (sdpAnswer: string) => {
-    console.log("addRemoteSdp ", sdpAnswer);
-    await this.rtcPeerConnection?.setRemoteDescription(
-      new RTCSessionDescription({ type: "answer", sdp: sdpAnswer })
-    );
+  private processOffer = async (sdp: string) => {
+    console.log("processOffer ", sdp);
 
-    // var stream = this.rtcPeerConnection.trac?.()[0]
-    // this.onRemoteTrack!(stream);
+    this.pc = this.createRtcPeerConnection();
+
+    await this.pc.setRemoteDescription({ type: "offer", sdp: sdp });
+
+    const answer = await this.pc?.createAnswer();
+    this.pc.setLocalDescription(answer);
+    await this.connection?.invoke("AddAnswer", answer.sdp);
   };
 
-  private processOffer = async (sdpOffer: string) => {
-    // console.log("addRemoteSdp ", sdpOffer);
-    // await this.rtcPeerConnection?.setRemoteDescription(
-    //   new RTCSessionDescription({ type: "answer", sdp: sdpAnswer })
-    // );
-
-    // await this.connection?.invoke("AddAnswer", offer.sdp);
+  private processAnswer = async (sdp: string) => {
+    console.log("processAnswer ", sdp);
+    await this.pc!.setRemoteDescription({ type: "answer", sdp });
   };
 
   private onTrack = (event: RTCTrackEvent) => {
     console.log("AppStore.onTrack", event);
+    //@ts-ignore
+    window.streams =event.streams;
     this.onRemoteTrack!(event.streams[0]);
+  };
+
+  private createRtcPeerConnection(): RTCPeerConnection {
+    const config = {
+      iceServers: [
+        {
+          urls: this.stunOrTurn,
+          credential: this.TurnPassword,
+          username: this.turnUser,
+          // iceTransportPolicy: "relay",
+        },
+      ],
+      // sdpSemantics: "unified-plan",
+    };
+
+    console.log("Creating RTCPeerConnection with ", config);
+    const pc = new RTCPeerConnection(config);
+    pc.onicecandidate = this.onLocalIceCandidate;
+    // pc.ontrack = this.onTrack;
+    pc.addEventListener(
+      "track",
+      (e) => {
+        this.onTrack(e);
+      },
+      false
+    );
+    // this.stream!.getTracks().forEach(t => pc.addTrack(t));
+
+    pc.addTrack(this.stream!.getTracks()[0], this.stream!);
+
+    return pc;
+  }
+
+  private onLocalIceCandidate = (event: RTCPeerConnectionIceEvent) => {
+    console.log("onLocalIceCandidate", event.candidate);
+    if (!event.candidate /*|| event.candidate.type !== "relay"*/) return;
+
+    this.connection?.invoke("AddIceCandidate", JSON.stringify(event.candidate));
   };
 }
 
