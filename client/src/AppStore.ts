@@ -74,10 +74,11 @@ class AppStore {
     await this.connection?.invoke("AddOffer", offer.sdp);
   };
 
-  private addRemoteIceCandidate(candidate: string) {
+  private addRemoteIceCandidate = async (candidate: string) => {
     console.log("addRemoteIceCandidate ", candidate);
     // TODO arriving string, check if need to be an object instead
-    this.pc?.addIceCandidate(new RTCIceCandidate(JSON.parse(candidate)));
+    console.log('Peer connection', this.pc);
+    await this.pc!.addIceCandidate(new RTCIceCandidate(JSON.parse(candidate)));
   }
 
   private processOffer = async (sdp: string) => {
@@ -137,7 +138,7 @@ class AppStore {
 
   private onLocalIceCandidate = (event: RTCPeerConnectionIceEvent) => {
     console.log("onLocalIceCandidate", event.candidate);
-    if (!event.candidate /*|| event.candidate.type !== "relay"*/) return;
+    // if (!event.candidate || event.candidate.type !== "relay") return;
 
     this.connection?.invoke("AddIceCandidate", JSON.stringify(event.candidate));
   };
