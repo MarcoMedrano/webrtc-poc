@@ -6,12 +6,12 @@
   "main": "public/electron.js",
   "homepage": "./",
   "scripts": {
-    "start2": "react-scripts start",
+    "start": "react-scripts start",
     "start:server": "rescripts start",
     "build": "rescripts build",
     "test": "CI=true rescripts test",
     "eject": "react-scripts eject",
-    "start": "concurrently \"BROWSER=none yarn start:server\" \"wait-on http://localhost:3000 && electron .\""
+    "start:electron": "concurrently \"BROWSER=none yarn start:server\" \"wait-on http://localhost:3000 && electron .\""
   },
   "eslintConfig": {
     "extends": "react-app"

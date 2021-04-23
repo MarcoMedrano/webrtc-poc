@@ -11,7 +11,7 @@ class AppStore {
   // @observable public stunList = "stun:stun.l.google.com:19302";
   // `stun:stun.l.google.com:19302` + `\nstun:stun1.l.google.com:19302`;
 
-  @observable public signalingServer = "http://localhost:5000";
+  @observable public signalingServer = "http://100.26.185.180:5000";
 
   private connection: signalR.HubConnection | null = null;
   private pc: RTCPeerConnection | null = null;
@@ -76,10 +76,13 @@ class AppStore {
 
   private addRemoteIceCandidate = async (candidate: string) => {
     console.log("addRemoteIceCandidate ", candidate);
-    // TODO arriving string, check if need to be an object instead
-    console.log('Peer connection', this.pc);
-    await this.pc!.addIceCandidate(new RTCIceCandidate(JSON.parse(candidate)));
-  }
+
+    try {
+      await this.pc!.addIceCandidate(JSON.parse(candidate));
+    } catch (err) {
+      console.warn("Could not add candidate due", err);
+    }
+  };
 
   private processOffer = async (sdp: string) => {
     console.log("processOffer ", sdp);
@@ -100,8 +103,6 @@ class AppStore {
 
   private onTrack = (event: RTCTrackEvent) => {
     console.log("AppStore.onTrack", event);
-    //@ts-ignore
-    window.streams =event.streams;
     this.onRemoteTrack!(event.streams[0]);
   };
 
@@ -131,14 +132,15 @@ class AppStore {
     );
     // this.stream!.getTracks().forEach(t => pc.addTrack(t));
 
-    pc.addTrack(this.stream!.getTracks()[0], this.stream!);
+    if (this.stream) pc.addTrack(this.stream?.getTracks()[0], this.stream!);
+    else console.warn("No media stream to share is present.");
 
     return pc;
   }
 
   private onLocalIceCandidate = (event: RTCPeerConnectionIceEvent) => {
     console.log("onLocalIceCandidate", event.candidate);
-    // if (!event.candidate || event.candidate.type !== "relay") return;
+    if (!event.candidate /*|| event.candidate.type !== "relay"*/) return;
 
     this.connection?.invoke("AddIceCandidate", JSON.stringify(event.candidate));
   };
