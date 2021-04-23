@@ -9,12 +9,15 @@ using s3_mover;
 class FileWatcher
 {
     public string Filter { get; set; }
-    public string Path { get; set; }
+    public string Path { get { return this.path; } set { this.path = value;this.waitHandle.Set();  } }
 
     public event FileSystemEventHandler Changed;
 
+    private string path;
+
     private int numberOfFiles;
     private ILogger<Worker> logger;
+    private EventWaitHandle waitHandle = new AutoResetEvent(false);
 
     /// <summary>
     /// Notice
@@ -32,7 +35,9 @@ class FileWatcher
 
     private async void CheckForFileChanges()
     {
-        this.logger.LogInformation("CheckForFileChanges running on thread " + Thread.CurrentThread.ManagedThreadId);
+        this.logger.LogInformation($"CheckForFileChanges in {this.Path} on thread " + Thread.CurrentThread.ManagedThreadId);
+        this.waitHandle.WaitOne();
+
         try
         {
             var directory = new DirectoryInfo(this.Path);
@@ -88,13 +93,13 @@ class FileWatcher
                 long oldLength = 0;
                 long newLength = fs.Length;
 
-                do 
+                do
                 {
                     this.logger.LogDebug($"oldLength {oldLength}, newLength {newLength}");
                     oldLength = newLength;
                     await Task.Delay(TimeSpan.FromSeconds(5));
                     newLength = fs.Length;
-                }while (newLength != oldLength);
+                } while (newLength != oldLength);
             }
         }
         catch (IOException)

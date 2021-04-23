@@ -19,7 +19,7 @@ namespace s3_mover
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            new S3Mover(logger).Run(this.configuration.GetValue<string>("watch"));
+            new S3Mover(logger).Run(this.configuration.GetValue<string>("folder"));
             while (!stoppingToken.IsCancellationRequested)
             {
                 // logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
