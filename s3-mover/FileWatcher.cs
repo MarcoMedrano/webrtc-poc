@@ -8,8 +8,23 @@ using s3_mover;
 
 class FileWatcher
 {
-    public string Filter { get; set; }
-    public string Path { get { return this.path; } set { this.path = value;this.waitHandle.Set();  } }
+    public string Filter
+    {
+        get => filter; 
+        set {
+            filter = value;
+            this.RunIfReady();
+        }
+    }
+    public string Path
+    {
+        get { return this.path; }
+        set
+        {
+            this.path = value;
+            this.RunIfReady();
+        }
+    }
 
     public event FileSystemEventHandler Changed;
 
@@ -17,7 +32,7 @@ class FileWatcher
 
     private int numberOfFiles;
     private ILogger<Worker> logger;
-    private EventWaitHandle waitHandle = new AutoResetEvent(false);
+    private string filter;
 
     /// <summary>
     /// Notice
@@ -29,6 +44,12 @@ class FileWatcher
     public FileWatcher(ILogger<Worker> logger)
     {
         this.logger = logger;
+    }
+
+    private void RunIfReady()
+    {
+        if (string.IsNullOrEmpty(this.Path) || string.IsNullOrEmpty(this.Filter)) return;
+
         var task = Task.Run(this.CheckForFileChanges);
         this.logger.LogInformation($"Task scheduled with id {task.Id}, current thread {Thread.CurrentThread.ManagedThreadId}");
     }
@@ -36,7 +57,6 @@ class FileWatcher
     private async void CheckForFileChanges()
     {
         this.logger.LogInformation($"CheckForFileChanges in {this.Path} on thread " + Thread.CurrentThread.ManagedThreadId);
-        this.waitHandle.WaitOne();
 
         try
         {
