@@ -9,7 +9,7 @@ namespace signaling.hubs
 {
     public class RecordingHub : DynamicHub
     {
-        private static int recordingNumber = 100;
+        private static int recordingNumber = 105;
         private readonly KurentoClient kurento;
         private readonly ILogger<RecordingHub> logger;
 
@@ -89,9 +89,16 @@ namespace signaling.hubs
 
             this.logger.LogDebug("CREATING KURENTO ENDPOINT ");
 
+            
             var pipeline = await this.kurento.CreateAsync(new MediaPipeline());
+            const string stunTurnIp = "54.242.2.183";
+            const int port = 3478;
 
             endpoint = await this.kurento.CreateAsync(new WebRtcEndpoint(pipeline));
+            await endpoint.SetStunServerAddressAsync(stunTurnIp);
+            await endpoint.SetStunServerPortAsync(port);
+            await endpoint.SetTurnUrlAsync($"td:1234@{stunTurnIp}:{port}");
+
             endpoint.OnIceCandidate += arg =>
             {
                 this.logger.LogInformation("Kurento ice candidate " + JsonConvert.SerializeObject(arg.candidate));

@@ -18,10 +18,10 @@ export default class ElectronScreenCapture {
                 mandatory: {
                     chromeMediaSource: "desktop",
                     chromeMediaSourceId: source!.id,
-                    maxWidth: display.bounds.width * 0.25,
-                    maxHeight: display.bounds.height * 0.25,
-                    maxFrameRate: 5,
-                    minFrameRate: 1,
+                    maxWidth: display.bounds.width * 1,
+                    maxHeight: display.bounds.height * 1,
+                    // maxFrameRate: 5,
+                    // minFrameRate: 1,
                 },
             },
         };

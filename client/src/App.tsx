@@ -55,7 +55,6 @@ class App extends React.Component<AppProps> {
     return (
       <div className="App">
         <RadioGroup
-          name={AppStore.emulationType}
           value={AppStore.emulationType}
           onChange={async (e) => {
             AppStore.emulationType = e.target.value;
@@ -69,7 +68,7 @@ class App extends React.Component<AppProps> {
             label="Callbar"
           />
           <FormControlLabel
-            value={AppStore.emulationType}
+            value="live_monitoring"
             control={<Radio />}
             label="Live Monitoring"
           />
@@ -190,13 +189,13 @@ class App extends React.Component<AppProps> {
           <>
             LOCAL
             <br />
-            <video ref={(video) => (this.localVideo = video)} autoPlay />
+            <video style={{height:300}} ref={(video) => (this.localVideo = video)} autoPlay />
             <br />
           </>
         )}
         REMOTE
         <br />
-        <video ref={(video) => (this.remoteVideo = video)} autoPlay />
+        <video style={{height:300}} ref={(video) => (this.remoteVideo = video)} autoPlay />
       </div>
     );
   }

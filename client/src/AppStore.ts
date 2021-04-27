@@ -1,18 +1,23 @@
 import { observable } from "mobx";
+import isElectron from "is-electron";
+
 
 // import { MessagePackHubProtocol } from "@microsoft/signalr-protocol-msgpack";
 import * as signalR from "@microsoft/signalr";
 class AppStore {
-  @observable public emulationType = '"live_monitoring"';
+  @observable public emulationType = isElectron() ? "callbar" : "live_monitoring";
   @observable public connected = false;
-  @observable public stunOrTurn = "turn:54.224.85.62:3478";
+ 
+  // @observable public stunOrTurn = "stun:stun.l.google.com:19302";
+  // @observable public turnUser:any;
+  // @observable public TurnPassword:any;
+  // @observable public signalingServer = "http://localhost:5000";
+
+  @observable public stunOrTurn = "turn:54.242.2.183:3478";
   @observable public turnUser = "tdx";
   @observable public TurnPassword = "1234";
-  // @observable public stunList = "stun:stun.l.google.com:19302";
-  // `stun:stun.l.google.com:19302` + `\nstun:stun1.l.google.com:19302`;
-
-  @observable public signalingServer = "http://100.26.185.180:5000";
-
+  @observable public signalingServer = "http://54.211.79.31:5000";
+  
   private connection: signalR.HubConnection | null = null;
   private pc: RTCPeerConnection | null = null;
 
