@@ -42,7 +42,7 @@ namespace signaling
             {
                 endpoints.MapGet("/", async context =>
                 {
-                    await context.Response.WriteAsync("Hello World!");
+                    await context.Response.WriteAsync("Hey!");
                 });
 
                 endpoints.MapHub<RecordingHub>("/recording");

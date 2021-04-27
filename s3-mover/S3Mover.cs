@@ -32,8 +32,8 @@ namespace s3_mover
 
         public void Run(string folder)
         {
-            this.logger.LogInformation("S3 Mover 10 " + folder);
-            path = !string.IsNullOrEmpty(folder) ? folder : Environment.GetEnvironmentVariable("S3_MOVER_WATCH") ?? Environment.CurrentDirectory;
+            this.logger.LogInformation("S3 Mover 13 " + folder);
+            path = !string.IsNullOrEmpty(folder) ? folder : Environment.GetEnvironmentVariable("S3_MOVER_FOLDER") ?? Environment.CurrentDirectory;
             // var watcher2 = new FileSystemWatcher();
             // watcher2.Path = path;
             // watcher2.NotifyFilter = NotifyFilters.LastWrite;
