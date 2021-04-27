@@ -4,7 +4,7 @@ export default class BrowserScreenCapture {
       //@ts-ignore next-line
       return navigator.mediaDevices.getDisplayMedia({
         // video: { width: 640, height: 320 },
-        video: true,
+        video: { frameRate: { max: 5 } },
         audio: false,
       });
     } catch (err) {
