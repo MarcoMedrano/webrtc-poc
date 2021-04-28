@@ -9,7 +9,7 @@ namespace signaling.hubs
 {
     public class RecordingHub : DynamicHub
     {
-        private static int recordingNumber = 105;
+        private static int recordingNumber = 110;
         private readonly KurentoClient kurento;
         private readonly ILogger<RecordingHub> logger;
 

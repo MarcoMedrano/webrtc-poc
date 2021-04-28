@@ -62,6 +62,8 @@
     "react-compound-timer": "^1.2.0",
     "react-digital-clock": "^0.1.2",
     "react-dom": "16.13.1",
-    "request": "^2.88.2"
+    "request": "^2.88.2",
+    "strongly-typed-events": "^2.1.7",
+    "ur-rtc": "/Users/marco/lr.tdx/wem-webrtc-poc/ur-rtc"
   }
 }

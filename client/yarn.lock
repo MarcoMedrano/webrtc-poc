@@ -11421,6 +11421,53 @@ static-extend@^0.1.1:
   resolved "https://registry.yarnpkg.com/statuses/-/statuses-1.5.0.tgz#161c7dac177659fd9811f43771fa99381478628c"
   integrity sha1-Fhx9rBd2Wf2YEfQ3cfqZOBR4Yow=
 
+ste-core@^2.1.7:
+  version "2.1.7"
+  resolved "https://registry.yarnpkg.com/ste-core/-/ste-core-2.1.7.tgz#d066a6e309465110198fc11cfbf09517d42e05c7"
+  integrity sha512-WKONzH+i8NOZ2MKdjrBgz8Wi3B6609EVd7eVsk9Ow1oN/Yp7q6+ZkRvmZjbZ12kTMZpQ19+Sbd8m0ro1QR/6PA==
+
+ste-events@^2.1.7:
+  version "2.1.7"
+  resolved "https://registry.yarnpkg.com/ste-events/-/ste-events-2.1.7.tgz#d5ee439fb9eb4d0bd5aacbb6af442282b25de557"
+  integrity sha512-1ClWHp23MTa66GoJzExrRfAbQgSNeLHr9iXAxa5Y71p1Q23r81Rjx16qNB6xmJoUAb2uXscxq3L+0P9rbW6nXQ==
+  dependencies:
+    ste-core "^2.1.7"
+
+ste-promise-events@^2.1.7:
+  version "2.1.7"
+  resolved "https://registry.yarnpkg.com/ste-promise-events/-/ste-promise-events-2.1.7.tgz#e7692d2e9ff9012b5495ccc311bd3e21d92c0940"
+  integrity sha512-QocGOwMm9vVb114wl1BZ/N6oJLRgrP1vevTX598zJFDnHSG/YOKBJnkL+5/j13HUWUCC4G9RZBV8i/+/F1LyDg==
+  dependencies:
+    ste-core "^2.1.7"
+
+ste-promise-signals@^2.1.7:
+  version "2.1.7"
+  resolved "https://registry.yarnpkg.com/ste-promise-signals/-/ste-promise-signals-2.1.7.tgz#f6cc757b464e19adb0424e0c96b8e970f713d383"
+  integrity sha512-FcT4bqFbZsdixhUUF5EFq+wo6H1PQNbGS49TWCK3GW2RVGD/q1XvDxA7eecXLvUo3XOfsYw5DB6+mbHe7S5Sbg==
+  dependencies:
+    ste-core "^2.1.7"
+
+ste-promise-simple-events@^2.1.7:
+  version "2.1.7"
+  resolved "https://registry.yarnpkg.com/ste-promise-simple-events/-/ste-promise-simple-events-2.1.7.tgz#f6b0be584ed4c8f83efc8ef15c7dfc1340624c4d"
+  integrity sha512-VyFozy7v2qPApsDbqI/IdAQAdYcvLoI/nDALgTe3IJm/766eW3mY0xI9c6MiqSOAbabnBn2Dji3xqP+tDM2r+Q==
+  dependencies:
+    ste-core "^2.1.7"
+
+ste-signals@^2.1.7:
+  version "2.1.7"
+  resolved "https://registry.yarnpkg.com/ste-signals/-/ste-signals-2.1.7.tgz#6502546609186f6c8b00bba2c3b53aa968f26540"
+  integrity sha512-uslaMR5pZcETiEv4/o79XbtnYBuV9quma2PPpEtvnBtbqUhVi9uRXLwoDzWcgJ3HPHxjofFCKhUj0c/qpl52DQ==
+  dependencies:
+    ste-core "^2.1.7"
+
+ste-simple-events@^2.1.7:
+  version "2.1.7"
+  resolved "https://registry.yarnpkg.com/ste-simple-events/-/ste-simple-events-2.1.7.tgz#c53f2317ef09b1e5a503027614aa8c3ccd592c45"
+  integrity sha512-EjqheM37U4xuaOVI7l1LOxOEbFIrrYYL4oB7TFIGQkTkGaZ4h3RkjRZ+ROKwkpmPWS8LauNx7tiwsFi7FN9aRw==
+  dependencies:
+    ste-core "^2.1.7"
+
 stealthy-require@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/stealthy-require/-/stealthy-require-1.1.1.tgz#35b09875b4ff49f26a777e509b3090a3226bf24b"
@@ -11647,6 +11694,19 @@ strip-json-comments@~2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-2.0.1.tgz#3c531942e908c2697c0ec344858c286c7ca0a60a"
   integrity sha1-PFMZQukIwml8DsNEhYwobHygpgo=
+
+strongly-typed-events@^2.1.7:
+  version "2.1.7"
+  resolved "https://registry.yarnpkg.com/strongly-typed-events/-/strongly-typed-events-2.1.7.tgz#a50a64f4c1699b11a81aef50acab15313feab85f"
+  integrity sha512-3ezbxXBtTFZgnwNvtA74zvRUMCU2kDKci2mFrbcvek1uLrxYdPcD/eqJHd62nxMNjVBIfdMFYsO1pIvAiBER5w==
+  dependencies:
+    ste-core "^2.1.7"
+    ste-events "^2.1.7"
+    ste-promise-events "^2.1.7"
+    ste-promise-signals "^2.1.7"
+    ste-promise-simple-events "^2.1.7"
+    ste-signals "^2.1.7"
+    ste-simple-events "^2.1.7"
 
 style-loader@0.23.1:
   version "0.23.1"

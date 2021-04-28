@@ -1,5 +1,6 @@
 // import { MessagePackHubProtocol } from "@microsoft/signalr-protocol-msgpack";
 import * as signalR from "@microsoft/signalr";
+import { SimpleEventDispatcher } from "strongly-typed-events";
 
 export default class UrRtc {
 
@@ -7,8 +8,12 @@ export default class UrRtc {
   private config: RTCConfiguration;
   private connection: signalR.HubConnection | null = null;
   private pc: RTCPeerConnection | null = null;
+  private _stream: MediaStream | null = null;
+  private _onRemoteTrack = new SimpleEventDispatcher<MediaStream>();
 
-  public onRemoteTrack: null | ((ms: MediaStream) => void) = null;
+  public get onRemoteTrack() {
+    return this._onRemoteTrack.asEvent();
+  }
 
   constructor(signalingServer: string, config: RTCConfiguration) {
     this.signalingServer = signalingServer;
@@ -16,6 +21,7 @@ export default class UrRtc {
   }
 
   set stream(value: MediaStream) {
+    this._stream = value;
     // TODO code to switch stream
   }
 
@@ -65,7 +71,7 @@ export default class UrRtc {
 
     const offer = await this.pc.createOffer(/*{offerToReceiveAudio: true}*/);
     await this.pc.setLocalDescription(offer);
-    await this.connection?.invoke("AddOffer", offer.sdp);
+    await this.connection!.invoke("AddOffer", offer.sdp);
   };
 
   private addRemoteIceCandidate = async (candidate: string) => {
@@ -79,25 +85,25 @@ export default class UrRtc {
   };
 
   private processOffer = async (sdp: string) => {
-    console.log("processOffer ", sdp);
+    console.log("processOffer ", { type: "offer", sdp: sdp });
 
     this.pc = this.createRtcPeerConnection();
 
     await this.pc.setRemoteDescription({ type: "offer", sdp: sdp });
 
-    const answer = await this.pc?.createAnswer();
+    const answer = await this.pc!.createAnswer();
     this.pc.setLocalDescription(answer);
-    await this.connection?.invoke("AddAnswer", answer.sdp);
+    await this.connection!.invoke("AddAnswer", answer.sdp);
   };
 
   private processAnswer = async (sdp: string) => {
-    console.log("processAnswer ", sdp);
+    console.log("processAnswer ", { type: "answer", sdp });
     await this.pc!.setRemoteDescription({ type: "answer", sdp });
   };
 
   private onTrack = (event: RTCTrackEvent) => {
-    console.log("AppStore.onTrack", event);
-    this.onRemoteTrack!(event.streams[0]);
+    console.log("UrRtc.onTrack", event);
+    this._onRemoteTrack.dispatch(event.streams[0]);
   };
 
   private createRtcPeerConnection(): RTCPeerConnection {
@@ -108,13 +114,14 @@ export default class UrRtc {
     pc.addEventListener(
       "track",
       (e) => {
+        console.log('on track from peer connection');
         this.onTrack(e);
       },
       false
     );
-    // this.stream!.getTracks().forEach(t => pc.addTrack(t));
-    console.log('Setting stream', this.stream);
-    if (this.stream) pc.addTrack(this.stream?.getTracks()[0], this.stream!);
+    // this._stream!.getTracks().forEach(t => pc.addTrack(t));
+    console.log('Setting stream', this._stream);
+    if (this._stream) pc.addTrack(this._stream.getTracks()[0], this._stream);
     else console.warn("No media stream to share is present.");
 
     return pc;
@@ -124,6 +131,6 @@ export default class UrRtc {
     console.log("onLocalIceCandidate", event.candidate);
     if (!event.candidate /*|| event.candidate.type !== "relay"*/) return;
 
-    this.connection?.invoke("AddIceCandidate", JSON.stringify(event.candidate));
+    this.connection!.invoke("AddIceCandidate", JSON.stringify(event.candidate));
   };
 }

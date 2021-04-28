@@ -126,7 +126,7 @@ class App extends React.Component<AppProps> {
                   variant="contained"
                   color="primary"
                   onClick={async () => {
-                    AppStore.onRemoteTrack = (stream: MediaStream) => {
+                    AppStore.onRemoteTrack.sub((stream: MediaStream) => {
                       console.log('Presenting remote track', stream);
                       
                       this.remoteVideo!.srcObject = stream;
@@ -134,7 +134,7 @@ class App extends React.Component<AppProps> {
                         this.remoteVideo!.play();
                       };
                       this.forceUpdate();
-                    };
+                    });
                 
                     await this.setupStream();
                   }}
