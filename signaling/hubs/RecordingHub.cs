@@ -9,7 +9,7 @@ namespace signaling.hubs
 {
     public class RecordingHub : DynamicHub
     {
-        private static int recordingNumber = 110;
+        private static int recordingNumber = 113;
         private readonly KurentoClient kurento;
         private readonly ILogger<RecordingHub> logger;
 
@@ -49,6 +49,8 @@ namespace signaling.hubs
 
                 await recorder.StopAsync();
 
+            }else{
+                this.logger.LogWarning("No recorder_endpoint ");
             }
         }
 
@@ -113,7 +115,7 @@ namespace signaling.hubs
             recorder.Recording += (e) => this.logger.LogInformation("Recording"); 
             this.Context.Items.Add("recorder_endpoint", recorder);
             await endpoint.ConnectAsync(recorder, MediaType.VIDEO, "default", "default");
-            await recorder.RecordAsync();
+
             return endpoint;
         }
         #endregion
