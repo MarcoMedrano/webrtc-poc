@@ -70,15 +70,17 @@ export default class UrRtc {
     this.pc = this.createRtcPeerConnection();
 
     const offer = await this.pc.createOffer(/*{offerToReceiveAudio: true}*/);
+    console.log('sending offer', offer);
     await this.pc.setLocalDescription(offer);
     await this.connection!.invoke("AddOffer", offer.sdp);
   };
 
   private addRemoteIceCandidate = async (candidate: string) => {
-    console.log("addRemoteIceCandidate ", candidate);
+    const candidateObj = JSON.parse(candidate);
+    console.log("addRemoteIceCandidate ", candidateObj);
 
     try {
-      await this.pc!.addIceCandidate(JSON.parse(candidate));
+      await this.pc!.addIceCandidate(candidateObj);
     } catch (err) {
       console.warn("Could not add candidate due", err);
     }
