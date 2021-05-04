@@ -9,7 +9,7 @@ namespace signaling.hubs
 {
     public class RecordingHub : DynamicHub
     {
-        private static int recordingNumber = 113;
+        private static int recordingNumber = 131;
         private readonly KurentoClient kurento;
         private readonly ILogger<RecordingHub> logger;
 
@@ -48,9 +48,14 @@ namespace signaling.hubs
                 RecorderEndpoint recorder = (RecorderEndpoint)recorderObj;
 
                 await recorder.StopAsync();
+                var endpoint = await GetKurentoEndpointAsync();
 
+                var disconnectTask = recorder.DisconnectAsync(endpoint);
+                var createRecorderTask = this.CreateRecorderEndpointAsync(endpoint, await endpoint.GetMediaPipelineAsync());
+                
+                Task.WaitAll(disconnectTask, createRecorderTask);
             }else{
-                this.logger.LogWarning("No recorder_endpoint ");
+                this.logger.LogWarning("No recorder_endpoint, did not call START?");
             }
         }
 
@@ -110,13 +115,24 @@ namespace signaling.hubs
             this.Context.Items.Add("kurento_endpoint", endpoint);
 
             await endpoint.ConnectAsync(endpoint);
+            await this.CreateRecorderEndpointAsync(endpoint, pipeline);
 
+            return endpoint;
+        }
+
+        private async Task<RecorderEndpoint> CreateRecorderEndpointAsync(WebRtcEndpoint endpoint, MediaPipeline pipeline)
+        {
             RecorderEndpoint recorder = await this.kurento.CreateAsync(new RecorderEndpoint(pipeline, $"file:///tmp/{recordingNumber++}.webm", MediaProfileSpecType.WEBM_VIDEO_ONLY));
             recorder.Recording += (e) => this.logger.LogInformation("Recording"); 
+            
+            if(this.Context.Items.ContainsKey("recorder_endpoint")) {
+                this.Context.Items.Remove("recorder_endpoint");
+            }
+
             this.Context.Items.Add("recorder_endpoint", recorder);
             await endpoint.ConnectAsync(recorder, MediaType.VIDEO, "default", "default");
 
-            return endpoint;
+            return recorder;
         }
         #endregion
     }
