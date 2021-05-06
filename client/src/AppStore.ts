@@ -9,15 +9,15 @@ class AppStore {
   @observable public emulationType = isElectron() ? "callbar" : "live_monitoring";
   @observable public connected = false;
 
-  @observable public stunOrTurn = "stun:stun.l.google.com:19302";
-  @observable public turnUser: any;
-  @observable public TurnPassword: any;
-  @observable public signalingServer = "http://localhost:5000";
+  // @observable public signalingServer = "http://localhost:5000";
+  // @observable public stunOrTurn = "stun:stun.l.google.com:19302";
+  // @observable public turnUser: any;
+  // @observable public TurnPassword: any;
 
-  // @observable public stunOrTurn = "turn:54.242.2.183:3478";
-  // @observable public turnUser = "tdx";
-  // @observable public TurnPassword = "1234";
-  // @observable public signalingServer = "http://54.211.79.31:5000";
+  @observable public signalingServer = "http://3.83.146.46:5000";
+  @observable public stunOrTurn = "turn:174.129.103.45:3478";
+  @observable public turnUser = "tdx";
+  @observable public TurnPassword = "1234";
 
   public get onRemoteTrack() {
     return this._onRemoteTrack.asEvent();

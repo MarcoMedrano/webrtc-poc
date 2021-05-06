@@ -67,11 +67,11 @@ export default class UrRtc {
   };
 
   public startPeerConnection = async () => {
-    this.pc = this.createRtcPeerConnection();
+    await this.createRtcPeerConnection();
 
-    const offer = await this.pc.createOffer(/*{offerToReceiveAudio: true}*/);
+    const offer = await this.pc!.createOffer();
     console.log('sending offer', offer);
-    await this.pc.setLocalDescription(offer);
+    await this.pc!.setLocalDescription(offer);
     await this.connection!.invoke("AddOffer", offer.sdp);
   };
 
@@ -89,12 +89,13 @@ export default class UrRtc {
   private processOffer = async (sdp: string) => {
     console.log("processOffer ", { type: "offer", sdp: sdp });
 
-    this.pc = this.createRtcPeerConnection();
+    await this.createRtcPeerConnection();
 
-    await this.pc.setRemoteDescription({ type: "offer", sdp: sdp });
+    await this.pc!.setRemoteDescription({ type: "offer", sdp: sdp });
 
     const answer = await this.pc!.createAnswer();
-    this.pc.setLocalDescription(answer);
+    this.pc!.setLocalDescription(answer);
+    console.log('sending answer', answer);
     await this.connection!.invoke("AddAnswer", answer.sdp);
   };
 
@@ -108,12 +109,13 @@ export default class UrRtc {
     this._onRemoteTrack.dispatch(event.streams[0]);
   };
 
-  private createRtcPeerConnection(): RTCPeerConnection {
+  private createRtcPeerConnection = async () => {
     console.log("Creating RTCPeerConnection with ", this.config);
-    const pc = new RTCPeerConnection(this.config);
-    pc.onicecandidate = this.onLocalIceCandidate;
-    // pc.ontrack = this.onTrack;
-    pc.addEventListener(
+    
+    this.pc = new RTCPeerConnection(this.config);
+    this.pc.onicecandidate = this.onLocalIceCandidate;
+    // this.pc.ontrack = this.onTrack;
+    this.pc.addEventListener(
       "track",
       (e) => {
         console.log('on track from peer connection');
@@ -121,12 +123,15 @@ export default class UrRtc {
       },
       false
     );
-    // this._stream!.getTracks().forEach(t => pc.addTrack(t));
-    console.log('Setting stream', this._stream);
-    if (this._stream) pc.addTrack(this._stream.getTracks()[0], this._stream);
-    else console.warn("No media stream to share is present.");
 
-    return pc;
+    console.log('Setting stream', this._stream);
+    if (this._stream) this.pc.addTrack(this._stream.getTracks()[0], this._stream);
+    else {
+      console.warn("No media stream to share is present. Creating offer to receive audio and video");
+      // This seems no needed if setRemoteDescription is set before send and SDP answer
+      const offer = await this.pc.createOffer({ offerToReceiveVideo: true });
+      await this.pc.setLocalDescription(offer);
+    }
   }
 
   private onLocalIceCandidate = (event: RTCPeerConnectionIceEvent) => {
