@@ -48,6 +48,15 @@ class App extends React.Component<AppProps> {
   private remoteVideo: HTMLVideoElement | null = null;
 
   public async componentDidMount() {
+    AppStore.onRemoteTrack.sub((stream: MediaStream) => {
+      console.log("Presenting remote track", stream);
+
+      this.remoteVideo!.srcObject = stream;
+      this.remoteVideo!.onloadedmetadata = (e) => {
+        this.remoteVideo!.play();
+      };
+      this.forceUpdate();
+    });
     await AppStore.connect();
   }
 
@@ -58,8 +67,8 @@ class App extends React.Component<AppProps> {
           value={AppStore.emulationType}
           onChange={async (e) => {
             AppStore.emulationType = e.target.value;
-            await AppStore.disconnect()
-            await AppStore.connect()
+            await AppStore.disconnect();
+            await AppStore.connect();
           }}
         >
           <FormControlLabel
@@ -126,20 +135,10 @@ class App extends React.Component<AppProps> {
                   variant="contained"
                   color="primary"
                   onClick={async () => {
-                    AppStore.onRemoteTrack.sub((stream: MediaStream) => {
-                      console.log('Presenting remote track', stream);
-                      
-                      this.remoteVideo!.srcObject = stream;
-                      this.remoteVideo!.onloadedmetadata = (e) => {
-                        this.remoteVideo!.play();
-                      };
-                      this.forceUpdate();
-                    });
-                
                     await this.setupStream();
                   }}
                 >
-                  SETUP
+                  SETUP STREAM
                 </Button>
                 <Button
                   style={{ margin: 4 }}
@@ -147,11 +146,10 @@ class App extends React.Component<AppProps> {
                   color="primary"
                   onClick={async () => {
                     timer.start();
-
                     await AppStore.startPeerConnection();
                   }}
                 >
-                  CONNECT
+                  CONNECT PEER
                 </Button>
                 {AppStore.isCallbar && (
                   <>
@@ -189,24 +187,31 @@ class App extends React.Component<AppProps> {
           <>
             LOCAL
             <br />
-            <video style={{height:300}} ref={(video) => (this.localVideo = video)} autoPlay />
+            <video
+              style={{ height: 300 }}
+              ref={(video) => (this.localVideo = video)}
+              autoPlay
+            />
             <br />
           </>
         )}
         REMOTE
         <br />
-        <video style={{height:300}} ref={(video) => (this.remoteVideo = video)} autoPlay />
+        <video
+          style={{ height: 300 }}
+          ref={(video) => (this.remoteVideo = video)}
+          autoPlay
+        />
       </div>
     );
   }
 
-  private async setupStream(){
+  private async setupStream() {
     let ScreenCapture = null;
     console.log("Is Electron ", isElectron());
 
     if (isElectron()) {
-      ScreenCapture = require("./ElectronScreenCapture")
-        .default;
+      ScreenCapture = require("./ElectronScreenCapture").default;
     } else {
       ScreenCapture = require("./BrowserScreenCapture").default;
     }
