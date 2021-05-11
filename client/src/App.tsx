@@ -201,6 +201,7 @@ class App extends React.Component<AppProps> {
           style={{ height: 300 }}
           ref={(video) => (this.remoteVideo = video)}
           autoPlay
+          controls
         />
       </div>
     );
