@@ -1,5 +1,6 @@
 using Kurento.NET;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
@@ -12,11 +13,15 @@ namespace signaling.hubs
         private static int recordingNumber = 170;
         private readonly KurentoClient kurento;
         private readonly ILogger<RecordingHub> logger;
+        private readonly Settings settings;
 
-        public RecordingHub(KurentoClient kurento, ILogger<RecordingHub> logger)
+        public RecordingHub(KurentoClient kurento, ILogger<RecordingHub> logger, IConfiguration configuration)
         {
             this.kurento = kurento;
             this.logger = logger;
+            this.settings = new Settings();
+
+            configuration.GetSection(nameof(Settings)).Bind(this.settings);
         }
 
         public override async Task OnConnectedAsync()
@@ -98,13 +103,11 @@ namespace signaling.hubs
 
             
             var pipeline = await this.kurento.CreateAsync(new MediaPipeline());
-            const string stunTurnIp = "34.235.158.64";
-            const int port = 3478;
 
             endpoint = await this.kurento.CreateAsync(new WebRtcEndpoint(pipeline));
-            await endpoint.SetStunServerAddressAsync(stunTurnIp);
-            await endpoint.SetStunServerPortAsync(port);
-            await endpoint.SetTurnUrlAsync($"tdx:1234@{stunTurnIp}:{port}");
+            await endpoint.SetStunServerAddressAsync(this.settings.Turn.ip);
+            await endpoint.SetStunServerPortAsync(this.settings.Turn.port);
+            await endpoint.SetTurnUrlAsync($"{this.settings.Turn.username}:{this.settings.Turn.credential}@{this.settings.Turn.ip}:{this.settings.Turn.port}");
 
             endpoint.OnIceCandidate += arg =>
             {
