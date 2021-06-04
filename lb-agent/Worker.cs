@@ -20,14 +20,17 @@ namespace lb_agent
             string hub = Environment.GetEnvironmentVariable("MS_ROLE");
 
             this.logger = logger;
+            string url = $"http://{lb_server}/{hub}loadBalancer";
+            this.logger.LogInformation("url to connect " + url);
+
             this.connection = new HubConnectionBuilder()
-                            .WithUrl(new Uri($"http://{lb_server}/load_balance{hub}"))
+                            .WithUrl(new Uri(url))
                             .WithAutomaticReconnect()
                             .Build();
 
             connection.Reconnecting += error =>
             {
-                this.logger.LogWarning("Connection lost, current connection state ", this.connection.State);
+                this.logger.LogWarning("Connection lost, current connection state " + this.connection.State);
                 return Task.CompletedTask;
             };
         }
@@ -47,6 +50,7 @@ namespace lb_agent
 
         private async Task<bool> ConnectWithRetryAsync(CancellationToken token)
         {
+            this.logger.LogInformation("connecting to server");
             while (true)
             {
                 try
@@ -60,7 +64,7 @@ namespace lb_agent
                 }
                 catch
                 {
-                    this.logger.LogWarning("Failed to connect, trying again in 5000 ms. Connection state ", connection.State);
+                    this.logger.LogWarning("Failed to connect, trying again in 5000 ms. Connection state " + connection.State);
                     await Task.Delay(5000);
                 }
             }
