@@ -25,7 +25,6 @@ namespace signaling.hubs
             var feature = Context.Features.Get<IHttpConnectionFeature>();
             this.logger.LogInformation($"Client connected with IP {feature.RemoteIpAddress}:{feature.RemotePort}");
 
-            this.logger.LogDebug("Client connected with ID " + this.Context.ConnectionId);
             await base.OnConnectedAsync();
         }
     }

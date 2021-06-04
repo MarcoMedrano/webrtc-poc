@@ -10,10 +10,7 @@ RUN apt-get update
 RUN apt-get install --no-install-recommends --no-install-suggests -y ca-certificates
 RUN ./dotnet-install.sh 
 
-# ENTRYPOINT ["/entrypoint.sh"]
-
-# CMD /root/.dotnet/dotnet --version
+COPY /lb-agent /lb-agent
 COPY /s3-mover /s3-mover
 ENV DOTNET_USE_POLLING_FILE_WATCHER=true
 ENTRYPOINT [ "./start.sh" ] 
-# CMD "touch test &"

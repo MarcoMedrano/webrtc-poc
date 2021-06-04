@@ -14,41 +14,51 @@ services:
   #   # networks:
   #   #   - backend
 
-  # signaling:
-  #   image: peerjs/peerjs-server
-  #   ports:
-  #     - 9000:9000
 
-  media_server_mirror:
-    # image: kurento/kurento-media-server:latest
-    container_name: ms_mirror
+  media_server_mirror1:
+    container_name: ms_mirror1
     build:
       context: .
       dockerfile: kurento/Dockerfile
     environment: 
       - MS_ROLE=mirror
-      - SIGNALING_SERVER=localhost:5000
+      - SIGNALING_SERVER=host.docker.internal:5000
       - KMS_MIN_PORT=5000
-      - KMS_MAX_PORT=5050
+      - KMS_MAX_PORT=5019
       - GST_DEBUG="2,Kurento*:4,kms*:4,sdp*:4,webrtc*:4,*rtpendpoint:4,rtp*handler:4,rtpsynchronizer:4,agnosticbin:4"
     ports: 
       - 8888:8888
-      - 5000-5050:5000-5050/udp
+      - 5000-5019:5000-5019/udp
 
-  media_server_recorder_1:
-    container_name: ms_recorder_1
+  media_server_mirror2:
+    container_name: ms_mirror2
     build:
       context: .
       dockerfile: kurento/Dockerfile
     environment: 
-      - MS_ROLE=recorder
-      - SIGNALING_SERVER=localhost:5000
-      - AWS_BUCKET_NAME=tdx-recordings
-      - AWS_ACCESS_KEY_ID=accesskey
-      - AWS_SECRET_KEY=secretkey
-      - KMS_MIN_PORT=5000
-      - KMS_MAX_PORT=5050
+      - MS_ROLE=mirror
+      - SIGNALING_SERVER=host.docker.internal:5000
+      - KMS_MIN_PORT=5020
+      - KMS_MAX_PORT=5039
       - GST_DEBUG="2,Kurento*:4,kms*:4,sdp*:4,webrtc*:4,*rtpendpoint:4,rtp*handler:4,rtpsynchronizer:4,agnosticbin:4"
+    ports: 
+      - 8889:8888
+      - 5020-5039:5020-5039/udp
+
+  # media_server_recorder_1:
+  #   container_name: ms_recorder_1
+  #   build:
+  #     context: .
+  #     dockerfile: kurento/Dockerfile
+  #   environment: 
+  #     - MS_ROLE=recorder
+  #     - SIGNALING_SERVER=localhost:5000
+  #     - AWS_BUCKET_NAME=tdx-recordings
+  #     - AWS_ACCESS_KEY_ID=key
+  #     - AWS_SECRET_KEY=key
+  #     - KMS_MIN_PORT=5000
+  #     - KMS_MAX_PORT=5050
+  #     - GST_DEBUG="2,Kurento*:4,kms*:4,sdp*:4,webrtc*:4,*rtpendpoint:4,rtp*handler:4,rtpsynchronizer:4,agnosticbin:4"
 
 #   turn:
 #     container_name: coturn

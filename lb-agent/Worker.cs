@@ -20,7 +20,7 @@ namespace lb_agent
             string hub = Environment.GetEnvironmentVariable("MS_ROLE");
 
             this.logger = logger;
-            string url = $"http://{lb_server}/{hub}loadBalancer";
+            string url = $"http://{lb_server}/{hub}LoadBalancer";
             this.logger.LogInformation("url to connect " + url);
 
             this.connection = new HubConnectionBuilder()
@@ -31,7 +31,7 @@ namespace lb_agent
             connection.Reconnecting += error =>
             {
                 this.logger.LogWarning("Connection lost, current connection state " + this.connection.State);
-                return Task.CompletedTask;
+                return Task.CompletedTask;  
             };
         }
 
@@ -41,10 +41,17 @@ namespace lb_agent
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                // check for CPU, MEMORY, DISK, NETWORK and report availability
-                await connection.InvokeAsync("ReportAvailability", true/*new { bit_rate = 1024 }*/);
                 logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
                 await Task.Delay(1000, stoppingToken);
+
+                if(this.connection.State != HubConnectionState.Connected) continue;
+
+                try {
+                    // check for CPU, MEMORY, DISK, NETWORK and report availability
+                    await connection.InvokeAsync("ReportAvailability", true/*new { bit_rate = 1024 }*/);
+                }catch (Exception e){
+                    this.logger.LogError("Could not report availability due:\n" + e);
+                }
             }
         }
 

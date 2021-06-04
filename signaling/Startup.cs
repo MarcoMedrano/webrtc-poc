@@ -47,8 +47,8 @@ namespace signaling
 
                 endpoints.MapHub<RecordingHub>("/recording");
                 endpoints.MapHub<LiveMonitoringHub>("/liveMonitoring");
-                endpoints.MapHub<MirrorLoadBalancerHub>("/mirrorloadBalancer");
-                endpoints.MapHub<RecorderLoadBalancerHub>("/recorderloadBalancer");
+                endpoints.MapHub<MirrorLoadBalancerHub>("/mirrorLoadBalancer");
+                endpoints.MapHub<RecorderLoadBalancerHub>("/recorderLoadBalancer");
             });
         }
     }
