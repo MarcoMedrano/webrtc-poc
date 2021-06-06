@@ -25,6 +25,7 @@ namespace signaling.hubs
             var feature = Context.Features.Get<IHttpConnectionFeature>();
             this.logger.LogInformation($"Client connected with IP {feature.RemoteIpAddress}:{feature.RemotePort}");
 
+            Cache.MirrorMediaServers.Add(new KurentoMediaServer(feature.RemoteIpAddress.ToString(), feature.RemotePort));
             await base.OnConnectedAsync();
         }
     }
