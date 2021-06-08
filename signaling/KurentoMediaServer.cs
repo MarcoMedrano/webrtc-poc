@@ -8,6 +8,8 @@ namespace signaling
     class KurentoMediaServer
     {
         private Lazy<KurentoClient> kurentoClient;
+        private string networkIpAddress;
+
         public string Ip { get; set; }
         public int Port { get; set; }
 
@@ -16,11 +18,21 @@ namespace signaling
         public long Available { get; internal set; }
 
         public bool MaintenanceMode { get; internal set; }
+        public string NetworkIpAddress
+        {
+            get => networkIpAddress;
+            internal set
+            {
+                networkIpAddress = value;
+                // TODO instead of lazy might be better make it async with retry so it is ready for first time usage.
+                this.kurentoClient = new Lazy<KurentoClient>(() => new KurentoClient($"ws://{value}:8888/kurento"));
+            }
+        }
 
         public KurentoMediaServer(string ip, int port)
         {
-            // TODO instead of lazy might be better make it async with retry so it is ready for first time usage.
-            this.kurentoClient = new Lazy<KurentoClient>(() => new KurentoClient($"ws://{this.Ip}:{this.Port}/kurento"));
+            this.Ip = ip;
+            this.Port = port;
         }
 
         public override bool Equals(object obj)
@@ -31,7 +43,7 @@ namespace signaling
 
         public override string ToString()
         {
-            return $"{this.Ip}:{this.Port}";
+            return $"{this.NetworkIpAddress}-{this.Ip}:{this.Port}";
         }
     }
 }

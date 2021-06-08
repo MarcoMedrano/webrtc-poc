@@ -18,6 +18,19 @@ namespace signaling.hubs
             this.logger = logger;
             this.configuration = configuration;
         }
+        
+        public void ReportNetworkIpAddress(string ip)
+        {
+            KurentoMediaServer kms = null;
+            if(this.Context.Items.TryGetValue("kms", out object obj))
+            {
+                kms = (KurentoMediaServer)obj;
+                kms.NetworkIpAddress = ip;
+                this.logger.LogInformation($"KMS {kms} reported network IP address {ip}");
+            }
+            else
+                this.logger.LogError("No media server found");
+        }
 
         public void ReportAvailability(long available)
         {
@@ -26,7 +39,7 @@ namespace signaling.hubs
             {
                 kms = (KurentoMediaServer)obj;
                 kms.Available = available;
-                this.logger.LogInformation($"KMS {kms} reported availability for {available}Mb");
+                this.logger.LogInformation($"KMS {kms} reported availability for {available} Mb");
             }
             else
                 this.logger.LogError("No media server found");

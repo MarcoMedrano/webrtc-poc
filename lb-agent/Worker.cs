@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.SignalR.Client;
+using System.Net;
+using System.Net.Sockets;
 
 namespace lb_agent
 {
@@ -25,31 +27,44 @@ namespace lb_agent
 
             this.connection = new HubConnectionBuilder()
                             .WithUrl(new Uri(url))
-                            .WithAutomaticReconnect()
+                            .WithAutomaticReconnect(new RetryReconnect())
                             .Build();
 
             connection.Reconnecting += error =>
             {
                 this.logger.LogWarning("Connection lost, current connection state " + this.connection.State);
-                return Task.CompletedTask;  
+                return Task.CompletedTask;
+            };
+
+            connection.Reconnected += str =>
+            {
+                return this.connection.InvokeAsync("ReportNetworkIpAddress", this.GetNetworkIPAddress());
             };
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             await this.ConnectWithRetryAsync(stoppingToken);
+            await Task.Delay(10000, stoppingToken);
 
-            while (!stoppingToken.IsCancellationRequested)
+            var ip = this.GetNetworkIPAddress();
+            this.logger.LogInformation($"Reporting network ip {ip}");
+            await this.connection.InvokeAsync("ReportNetworkIpAddress", ip);
+
+            while(!stoppingToken.IsCancellationRequested)
             {
-                logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                await Task.Delay(10000, stoppingToken);
+                await Task.Delay(30000, stoppingToken);
 
                 if(this.connection.State != HubConnectionState.Connected) continue;
 
-                try {
+                try
+                {
                     // check for CPU, MEMORY, DISK, NETWORK and report availability
+                    logger.LogInformation($"[{ip}] reporting availability {1024}");
                     await connection.InvokeAsync("ReportAvailability", 1024);
-                }catch (Exception e){
+                }
+                catch(Exception e)
+                {
                     this.logger.LogError("Could not report availability due:\n" + e);
                 }
             }
@@ -58,14 +73,14 @@ namespace lb_agent
         private async Task<bool> ConnectWithRetryAsync(CancellationToken token)
         {
             this.logger.LogInformation("connecting to server");
-            while (true)
+            while(true)
             {
                 try
                 {
                     await connection.StartAsync(token);
-                    if (connection.State == HubConnectionState.Connected) return true;
+                    if(connection.State == HubConnectionState.Connected) return true;
                 }
-                catch when (token.IsCancellationRequested)
+                catch when(token.IsCancellationRequested)
                 {
                     return false;
                 }
@@ -76,5 +91,28 @@ namespace lb_agent
                 }
             }
         }
+
+        private string GetNetworkIPAddress()
+        {
+            // System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable();
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach(var ip in host.AddressList)
+            {
+                if(ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+            throw new Exception("No network adapters with an IPv4 address in the system!");
+        }
     }
+
+    class RetryReconnect : IRetryPolicy
+    {
+        public TimeSpan? NextRetryDelay(RetryContext retryContext)
+        {
+            return TimeSpan.FromSeconds(5);
+        }
+    }
+
 }

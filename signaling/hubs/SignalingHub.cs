@@ -1,4 +1,5 @@
 using Kurento.NET;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -45,7 +46,7 @@ namespace signaling.hubs
         }
         public async Task AddOffer(string sdpOffer)
         {
-            this.logger.LogDebug("Adding remote offer \n" + sdpOffer);
+            this.logger.LogDebug("Adding remote offer \n" /*+ sdpOffer*/);
             var endpoint = await GetKurentoEndpointAsync();
             var sdpAnswer = await endpoint.ProcessOfferAsync(sdpOffer);
 
@@ -73,9 +74,13 @@ namespace signaling.hubs
             }
             else
             {
-                kurento = LoadBalancer.NextAvailable().KurentoClient;
+                var kms = LoadBalancer.NextAvailable();
+                kurento = kms.KurentoClient;
                 this.Context.Items.Add("kms", kurento);
 
+                var feature = Context.Features.Get<IHttpConnectionFeature>();
+
+                this.logger.LogInformation($"KMS {kms} assigned to {feature.RemoteIpAddress}:{feature.RemotePort}");
             }
 
             var pipeline = await kurento.CreateAsync(new MediaPipeline());

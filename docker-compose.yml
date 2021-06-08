@@ -14,6 +14,14 @@ services:
   #   # networks:
   #   #   - backend
 
+  signaling_server:
+    container_name: signaling
+    build:
+      context: .
+      dockerfile: signaling/Dockerfile
+    ports: 
+      - 5000:5000
+      - 5001:5001
 
   media_server_mirror1:
     container_name: ms_mirror1
@@ -23,12 +31,12 @@ services:
     environment: 
       - MS_ROLE=mirror
       - SIGNALING_SERVER=host.docker.internal:5000
-      - KMS_MIN_PORT=5000
+      - KMS_MIN_PORT=5002
       - KMS_MAX_PORT=5019
       - GST_DEBUG="2,Kurento*:4,kms*:4,sdp*:4,webrtc*:4,*rtpendpoint:4,rtp*handler:4,rtpsynchronizer:4,agnosticbin:4"
     ports: 
       - 8888:8888
-      - 5000-5019:5000-5019/udp
+      - 5002-5019:5002-5019/udp
 
   media_server_mirror2:
     container_name: ms_mirror2
