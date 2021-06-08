@@ -42,13 +42,13 @@ namespace lb_agent
             while (!stoppingToken.IsCancellationRequested)
             {
                 logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                await Task.Delay(1000, stoppingToken);
+                await Task.Delay(10000, stoppingToken);
 
                 if(this.connection.State != HubConnectionState.Connected) continue;
 
                 try {
                     // check for CPU, MEMORY, DISK, NETWORK and report availability
-                    await connection.InvokeAsync("ReportAvailability", true/*new { bit_rate = 1024 }*/);
+                    await connection.InvokeAsync("ReportAvailability", 1024);
                 }catch (Exception e){
                     this.logger.LogError("Could not report availability due:\n" + e);
                 }

@@ -45,7 +45,7 @@ class AppStore {
     };
 
     console.log("Creating ur-rtc with ", config);
-    const hub = this.isCallbar ? "recording" : "liveMonitoring";
+    const hub = this.isCallbar ? "recording" : "signaling";//"liveMonitoring";
 
     this.connection = new UrRtc(
       `${this.signalingServer}/${hub}`,
