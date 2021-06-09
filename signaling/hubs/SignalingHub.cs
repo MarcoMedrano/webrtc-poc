@@ -35,15 +35,7 @@ namespace signaling.hubs
             await this.Clients.Caller.Pong();
         }
 
-        #region ICE Negotiation
-        public async Task AddIceCandidate(string candidateStr /*IceCandidate candidate*/)
-        {
-            var candidate = JsonConvert.DeserializeObject<IceCandidate>(candidateStr);
-            this.logger.LogDebug("Adding remote candidate " + JsonConvert.SerializeObject(candidate));
-            var endpoint = await this.GetKurentoEndpointAsync();
-            await endpoint.AddIceCandidateAsync(candidate);
-
-        }
+        #region SDP & ICE Negotiation
         public async Task AddOffer(string sdpOffer)
         {
             this.logger.LogDebug("Adding remote offer \n" /*+ sdpOffer*/);
@@ -55,12 +47,20 @@ namespace signaling.hubs
             await endpoint.GatherCandidatesAsync();
         }
 
+        public async Task AddIceCandidate(string candidateStr /*IceCandidate candidate*/)
+        {
+            var candidate = JsonConvert.DeserializeObject<IceCandidate>(candidateStr);
+            this.logger.LogDebug("Adding remote candidate " + JsonConvert.SerializeObject(candidate));
+            var endpoint = await this.GetKurentoEndpointAsync();
+            await endpoint.AddIceCandidateAsync(candidate);
+
+        }
         #endregion
 
         private async Task<WebRtcEndpoint> GetKurentoEndpointAsync()
         {
             WebRtcEndpoint endpoint = null;
-            if(this.Context.Items.TryGetValue("kurento_endpoint", out object endpointObj))
+            if (this.Context.Items.TryGetValue("kurento_endpoint", out object endpointObj))
             {
                 return (WebRtcEndpoint)endpointObj;
             }
@@ -68,7 +68,7 @@ namespace signaling.hubs
             this.logger.LogDebug("CREATING KURENTO ENDPOINT ");
 
             KurentoClient kurento = null;
-            if(this.Context.Items.TryGetValue("kms", out object obj))
+            if (this.Context.Items.TryGetValue("kms", out object obj))
             {
                 kurento = (KurentoClient)obj;
             }
@@ -98,7 +98,7 @@ namespace signaling.hubs
 
             this.Context.Items.Add("kurento_endpoint", endpoint);
 
-            await endpoint.ConnectAsync(endpoint);
+            // await endpoint.ConnectAsync(endpoint);
             // await this.CreateRecorderEndpointAsync(endpoint, pipeline);
 
             return endpoint;

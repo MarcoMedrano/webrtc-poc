@@ -1,7 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Hosting;
+// using Microsoft.NET.Sdk.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -11,7 +10,8 @@ namespace lb_agent
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            //CreateHostBuilder(args).Build().RunAsync();
+            BuildWebHost(args).Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -20,5 +20,10 @@ namespace lb_agent
                 {
                     services.AddHostedService<Worker>();
                 });
+
+        public static IWebHost BuildWebHost(string[] args) =>
+            WebHost.CreateDefaultBuilder(args)
+                .UseStartup<Startup>()
+                .Build();
     }
 }
