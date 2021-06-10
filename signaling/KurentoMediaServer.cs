@@ -1,6 +1,4 @@
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Kurento.NET;
 
 namespace signaling
@@ -10,7 +8,6 @@ namespace signaling
         private Lazy<KurentoClient> kurentoClient;
         private string networkIpAddress;
 
-        public string Ip { get; set; }
         public int Port { get; set; }
 
         public KurentoClient KurentoClient => this.kurentoClient.Value;
@@ -18,7 +15,7 @@ namespace signaling
         public long Available { get; internal set; }
 
         public bool MaintenanceMode { get; internal set; }
-        public string NetworkIpAddress
+        public string Ip
         {
             get => networkIpAddress;
             internal set
@@ -31,22 +28,28 @@ namespace signaling
 
         public string Role { get; internal set; }
 
-        public KurentoMediaServer(string ip, int port, string role = "mirror")
+        public KurentoMediaServer(string ip, int port, string role) : this(ip, port)
+        {
+            this.Role = role;
+        }
+
+        public KurentoMediaServer(string ip, int port)
         {
             this.Ip = ip;
             this.Port = port;
-            this.Role = role;
         }
 
         public override bool Equals(object obj)
         {
+            if(obj == null) return false;
+
             var kms = (KurentoMediaServer)obj;
             return this.Ip == kms.Ip && this.Port == kms.Port;
         }
 
         public override string ToString()
         {
-            return $"{this.NetworkIpAddress}-{this.Ip}:{this.Port}";
+            return $"{this.Ip}:{this.Port} - {this.Role}";
         }
     }
 }

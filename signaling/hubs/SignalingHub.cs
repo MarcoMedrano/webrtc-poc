@@ -74,7 +74,8 @@ namespace signaling.hubs
             }
             else
             {
-                var kms = LoadBalancer.NextAvailable();
+                Cache.MediaServers.ForEach(kms => this.logger.LogDebug("cache " + kms));
+                var kms = LoadBalancer.NextAvailable("mirror");
                 kurento = kms.KurentoClient;
                 this.Context.Items.Add("kms", kurento);
 
@@ -114,8 +115,8 @@ namespace signaling.hubs
             var kms = LoadBalancer.NextAvailable("recorder");
             var kurento = kms.KurentoClient;
 
-            // var pipelineRecorder = await kurento.CreateAsync(new MediaPipeline());
-            var preRecorderEndpoint = await kurento.CreateAsync(new WebRtcEndpoint(pipeline));
+            var pipelineRecorder = await kurento.CreateAsync(new MediaPipeline());
+            var preRecorderEndpoint = await kurento.CreateAsync(new WebRtcEndpoint(pipelineRecorder));
             // await endpoint.SetStunServerAddressAsync(this.settings.Turn.ip);
             // await endpoint.SetStunServerPortAsync(this.settings.Turn.port);
             // await endpoint.SetTurnUrlAsync($"{this.settings.Turn.username}:{this.settings.Turn.credential}@{this.settings.Turn.ip}:{this.settings.Turn.port}");

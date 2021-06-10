@@ -5,9 +5,9 @@ namespace signaling
     static class Cache
     {
         static Cache(){
-            Cache.MirrorMediaServers = new List<KurentoMediaServer>();
+            Cache.MediaServers = new List<KurentoMediaServer>();
         }
 
-        public static List<KurentoMediaServer> MirrorMediaServers { get; set; }
+        public static List<KurentoMediaServer> MediaServers { get; set; }
     }
 }

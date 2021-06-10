@@ -19,10 +19,9 @@ namespace lb_agent
         public Worker(ILogger<Worker> logger)
         {
             string lb_server = Environment.GetEnvironmentVariable("SIGNALING_SERVER");
-            string hub = Environment.GetEnvironmentVariable("MS_ROLE");
 
             this.logger = logger;
-            string url = $"http://{lb_server}/{hub}LoadBalancer";
+            string url = $"http://{lb_server}/loadBalancer";
             this.logger.LogInformation("url to connect " + url);
 
             this.connection = new HubConnectionBuilder()
@@ -48,8 +47,10 @@ namespace lb_agent
             await Task.Delay(10000, stoppingToken);
 
             var ip = this.GetNetworkIPAddress();
-            this.logger.LogInformation($"Reporting network ip {ip}");
-            await this.connection.InvokeAsync("ReportNetworkIpAddress", ip);
+            string role = Environment.GetEnvironmentVariable("MS_ROLE");
+
+            this.logger.LogInformation($"Registering with ip {ip} and role {role}");
+            await this.connection.InvokeAsync("Register", ip, role);
 
             while(!stoppingToken.IsCancellationRequested)
             {

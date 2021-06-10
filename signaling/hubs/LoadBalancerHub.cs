@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Kurento.NET;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
@@ -8,28 +7,32 @@ using Microsoft.Extensions.Logging;
 
 namespace signaling.hubs
 {
-    public class MirrorLoadBalancerHub : DynamicHub
+    public class LoadBalancerHub : DynamicHub
     {
-        private readonly ILogger<MirrorLoadBalancerHub> logger;
+        private readonly ILogger<LoadBalancerHub> logger;
         private readonly IConfiguration configuration;
 
-        public MirrorLoadBalancerHub(ILogger<MirrorLoadBalancerHub> logger, IConfiguration configuration)
+        public LoadBalancerHub(ILogger<LoadBalancerHub> logger, IConfiguration configuration)
         {
             this.logger = logger;
             this.configuration = configuration;
         }
-        
-        public void ReportNetworkIpAddress(string ip)
+
+        public void Register(string ip, string role)
         {
-            KurentoMediaServer kms = null;
-            if(this.Context.Items.TryGetValue("kms", out object obj))
-            {
-                kms = (KurentoMediaServer)obj;
-                kms.NetworkIpAddress = ip;
-                this.logger.LogInformation($"KMS {kms} reported network IP address {ip}");
-            }
+            var feature = Context.Features.Get<IHttpConnectionFeature>();
+            var kms = new KurentoMediaServer(ip, feature.RemotePort, role);
+            this.logger.LogInformation($"Agent connected {kms}");
+
+            if(Cache.MediaServers.Contains(kms))
+                this.logger.LogWarning($"Media Server {kms} already exist in cache");
             else
-                this.logger.LogError("No media server found");
+                Cache.MediaServers.Add(kms);
+
+            if(this.Context.Items.ContainsKey("kms"))
+                this.logger.LogWarning($"Media Server {kms} already exist in context");
+            else
+                this.Context.Items.Add("kms", kms);
         }
 
         public void ReportAvailability(long available)
@@ -58,25 +61,6 @@ namespace signaling.hubs
                 this.logger.LogError("No media server found");
         }
 
-        public override async Task OnConnectedAsync()
-        {
-            var feature = Context.Features.Get<IHttpConnectionFeature>();
-            var kms = new KurentoMediaServer(feature.RemoteIpAddress.ToString(), feature.RemotePort, "mirror");
-            this.logger.LogInformation($"Client connected {kms}");
-
-            if(Cache.MirrorMediaServers.Contains(kms))
-                this.logger.LogWarning($"Media Server {kms} already exist in cache");
-            else
-                Cache.MirrorMediaServers.Add(kms);
-
-            if(this.Context.Items.ContainsKey("kms"))
-                this.logger.LogWarning($"Media Server {kms} already exist in context");
-            else
-                this.Context.Items.Add("kms", kms);
-
-            await base.OnConnectedAsync();
-        }
-
         public override Task OnDisconnectedAsync(Exception exception)
         {
             var feature = Context.Features.Get<IHttpConnectionFeature>();
@@ -84,8 +68,8 @@ namespace signaling.hubs
 
             this.logger.LogWarning($"Client disconnected {kms}");
 
-            if(Cache.MirrorMediaServers.Contains(kms))
-                Cache.MirrorMediaServers.Remove(kms);
+            if(Cache.MediaServers.Contains(kms))
+                Cache.MediaServers.Remove(kms);
             else
                 this.logger.LogWarning($"Media Server {kms} did not exist in cache");
 
