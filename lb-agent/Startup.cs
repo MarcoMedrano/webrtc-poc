@@ -26,15 +26,13 @@ namespace lb_agent
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
+            if(env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
 
             app.UseHttpsRedirection();
-
             app.UseRouting();
-
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
@@ -42,7 +40,7 @@ namespace lb_agent
                 endpoints.MapControllers();
             });
 
-            
+
             app.UseSwagger();
             string swaggerEndpoint = "/swagger/v1/swagger.json";
             app.UseSwaggerUI(c =>

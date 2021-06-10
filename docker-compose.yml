@@ -33,8 +33,9 @@ services:
       - SIGNALING_SERVER=host.docker.internal:5000
       - KMS_MIN_PORT=5002
       - KMS_MAX_PORT=5019
-      - GST_DEBUG="2,Kurento*:4,kms*:4,sdp*:4,webrtc*:4,*rtpendpoint:4,rtp*handler:4,rtpsynchronizer:4,agnosticbin:4"
+      - GST_DEBUG="2,Kurento*:3,kms*:3,sdp*:3,webrtc*:3,*rtpendpoint:3,rtp*handler:3,rtpsynchronizer:3,agnosticbin:3"
     ports: 
+      - 8001:5001
       - 8888:8888
       - 5002-5019:5002-5019/udp
 
@@ -48,8 +49,9 @@ services:
       - SIGNALING_SERVER=host.docker.internal:5000
       - KMS_MIN_PORT=5020
       - KMS_MAX_PORT=5039
-      - GST_DEBUG="2,Kurento*:4,kms*:4,sdp*:4,webrtc*:4,*rtpendpoint:4,rtp*handler:4,rtpsynchronizer:4,agnosticbin:4"
+      - GST_DEBUG="2,Kurento*:2,kms*:2,sdp*:2,webrtc*:2,*rtpendpoint:2,rtp*handler:2,rtpsynchronizer:2,agnosticbin:2"
     ports: 
+      - 8002:5001
       - 8889:8888
       - 5020-5039:5020-5039/udp
 

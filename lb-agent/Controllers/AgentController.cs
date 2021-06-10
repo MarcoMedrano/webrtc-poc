@@ -10,7 +10,7 @@ namespace lb_agent.Controllers
 {
 
     [ApiController]
-    [Route("[controller]")]
+    [Route("agent")]
     public class AgentController : Controller
     {
         private ILogger Logger { get; set; }
@@ -31,7 +31,7 @@ namespace lb_agent.Controllers
         }
 
         [HttpGet]
-        [Route("stats/memory")]
+        [Route("memory")]
 
         public Memory GetStats()
         {
@@ -48,7 +48,7 @@ namespace lb_agent.Controllers
         /// </param>
         /// <response code="200">OK</response>
         [HttpPost]
-        [Route("stats/memory/used")]
+        [Route("memory/used")]
         public void PostJson([FromBody]int value)
         {
             this.Logger.LogDebug("Value received " + value);

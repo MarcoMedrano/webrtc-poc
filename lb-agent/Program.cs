@@ -25,6 +25,7 @@ namespace lb_agent
            Host.CreateDefaultBuilder(args)
                .ConfigureWebHostDefaults(webBuilder =>
                {
+                   webBuilder.UseUrls("http://*:5000", "https://*:5001");
                    webBuilder.UseStartup<Startup>();
                });
     }
