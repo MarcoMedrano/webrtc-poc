@@ -61,7 +61,7 @@ namespace signaling.hubs
         public override async Task OnConnectedAsync()
         {
             var feature = Context.Features.Get<IHttpConnectionFeature>();
-            var kms = new KurentoMediaServer(feature.RemoteIpAddress.ToString(), feature.RemotePort);
+            var kms = new KurentoMediaServer(feature.RemoteIpAddress.ToString(), feature.RemotePort, "mirror");
             this.logger.LogInformation($"Client connected {kms}");
 
             if(Cache.MirrorMediaServers.Contains(kms))

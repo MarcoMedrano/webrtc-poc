@@ -29,10 +29,13 @@ namespace signaling
             }
         }
 
-        public KurentoMediaServer(string ip, int port)
+        public string Role { get; internal set; }
+
+        public KurentoMediaServer(string ip, int port, string role = "mirror")
         {
             this.Ip = ip;
             this.Port = port;
+            this.Role = role;
         }
 
         public override bool Equals(object obj)

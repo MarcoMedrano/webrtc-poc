@@ -99,9 +99,59 @@ namespace signaling.hubs
             this.Context.Items.Add("kurento_endpoint", endpoint);
 
             // await endpoint.ConnectAsync(endpoint);
-            // await this.CreateRecorderEndpointAsync(endpoint, pipeline);
+            await this.CreateRecorderEndpointAsync(kurento, endpoint, pipeline);
 
             return endpoint;
+        }
+
+        private async Task<RecorderEndpoint> CreateRecorderEndpointAsync(KurentoClient kurentoMirror, WebRtcEndpoint receiverEndpoint, MediaPipeline pipeline)
+        {
+            var mirrorEndpoint = await kurentoMirror.CreateAsync(new WebRtcEndpoint(pipeline));
+            await receiverEndpoint.ConnectAsync(mirrorEndpoint);
+
+
+            
+            var kms = LoadBalancer.NextAvailable("recorder");
+            var kurento = kms.KurentoClient;
+
+            // var pipelineRecorder = await kurento.CreateAsync(new MediaPipeline());
+            var preRecorderEndpoint = await kurento.CreateAsync(new WebRtcEndpoint(pipeline));
+            // await endpoint.SetStunServerAddressAsync(this.settings.Turn.ip);
+            // await endpoint.SetStunServerPortAsync(this.settings.Turn.port);
+            // await endpoint.SetTurnUrlAsync($"{this.settings.Turn.username}:{this.settings.Turn.credential}@{this.settings.Turn.ip}:{this.settings.Turn.port}");
+
+            preRecorderEndpoint.OnIceCandidate += async arg =>
+            {
+                this.logger.LogInformation("Kurento Recorder ice candidate " + JsonConvert.SerializeObject(arg.candidate));
+                await mirrorEndpoint.AddIceCandidateAsync(arg.candidate);
+            };
+
+            mirrorEndpoint.OnIceCandidate += async arg =>
+            {
+                this.logger.LogInformation("Kurento Mirror ice candidate " + JsonConvert.SerializeObject(arg.candidate));
+                await preRecorderEndpoint.AddIceCandidateAsync(arg.candidate);
+            };
+
+            var offer = await mirrorEndpoint.GenerateOfferAsync();
+            var answer = await preRecorderEndpoint.ProcessOfferAsync(offer);
+            await mirrorEndpoint.ProcessAnswerAsync(answer); //maybe not needed OR preRecorderEndpoint.processAnswerAsync needed as well.
+
+            await mirrorEndpoint.GatherCandidatesAsync();
+            await preRecorderEndpoint.GatherCandidatesAsync();
+
+            RecorderEndpoint recorder = await kurento.CreateAsync(new RecorderEndpoint(pipeline, $"file:///tmp/1.webm", MediaProfileSpecType.WEBM_VIDEO_ONLY));
+            recorder.Recording += (e) => this.logger.LogInformation("Recording"); 
+            
+            if(this.Context.Items.ContainsKey("recorder_endpoint")) {
+                this.Context.Items.Remove("recorder_endpoint");
+            }
+
+            this.Context.Items.Add("recorder_endpoint", recorder);
+            await preRecorderEndpoint.ConnectAsync(recorder, MediaType.VIDEO, "default", "default");
+
+            await recorder.RecordAsync();
+
+            return recorder;
         }
     }
 }
