@@ -140,7 +140,7 @@ namespace signaling.hubs
             await mirrorEndpoint.GatherCandidatesAsync();
             await preRecorderEndpoint.GatherCandidatesAsync();
 
-            RecorderEndpoint recorder = await kurento.CreateAsync(new RecorderEndpoint(pipeline, $"file:///tmp/1.webm", MediaProfileSpecType.WEBM_VIDEO_ONLY));
+            RecorderEndpoint recorder = await kurento.CreateAsync(new RecorderEndpoint(pipelineRecorder, $"file:///tmp/1-{kms.Ip}.webm", MediaProfileSpecType.WEBM_VIDEO_ONLY));
             recorder.Recording += (e) => this.logger.LogInformation("Recording"); 
             
             if(this.Context.Items.ContainsKey("recorder_endpoint")) {
