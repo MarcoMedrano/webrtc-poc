@@ -1,13 +1,13 @@
 namespace lb_agent
 {
-    static class SystemStats 
+    static class SystemStats
     {
-        public static Memory Memory = default(Memory); 
+        public static Memory Memory = new Memory();
     }
 
     public class Memory
     {
-        public int Total;
-        public int Used;
+        public int Total { get; set; } = 1024;
+        public int Used { get; set; }
     }
 }

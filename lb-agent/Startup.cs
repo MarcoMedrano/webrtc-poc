@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System.IO;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using System.IO;
+
 
 namespace lb_agent
 {
@@ -19,34 +20,31 @@ namespace lb_agent
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddRouting(options => options.LowercaseUrls = true);
-            services.AddMvc(options => options.EnableEndpointRouting = false);//.AddMvc(options => options.EnableEndpointRouting = false).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
-            // services.AddSwaggerGen(c =>
-            //                         {
-            //                             c.DocumentFilter<LowercaseDocumentFilter>();
-            //                             c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
-
-            //                             var filePath = Path.Combine(System.AppContext.BaseDirectory, "lb-agent.xml");
-            //                             c.IncludeXmlComments(filePath);
-            //                         });
-
+            services.AddSwaggerGen();
+            services.AddControllers();
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
-            else
-            {
-                app.UseHsts();
-            }
 
-            string prefix = env.IsDevelopment() ? "/dev" : string.Empty;
-            string swaggerEndpoint = prefix + "/swagger/v1/swagger.json";
+            app.UseHttpsRedirection();
+
+            app.UseRouting();
+
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
+
             
             app.UseSwagger();
+            string swaggerEndpoint = "/swagger/v1/swagger.json";
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint(swaggerEndpoint, "My API V1");
@@ -57,9 +55,6 @@ namespace lb_agent
                 c.RoutePrefix = "docs";
                 c.SpecUrl(swaggerEndpoint);
             });
-
-
-            app.UseMvc();
         }
     }
 }

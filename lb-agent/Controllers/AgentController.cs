@@ -9,7 +9,8 @@ using Newtonsoft.Json;
 namespace lb_agent.Controllers
 {
 
-    [Route("api/[controller]")]
+    [ApiController]
+    [Route("[controller]")]
     public class AgentController : Controller
     {
         private ILogger Logger { get; set; }
@@ -30,16 +31,16 @@ namespace lb_agent.Controllers
         }
 
         [HttpGet]
-        [Route("stats")]
+        [Route("stats/memory")]
 
-        public string GetStats()
+        public Memory GetStats()
         {
             this.Logger.LogDebug("Printing stats");
-            return JsonConvert.SerializeObject(SystemStats.Memory);
+            return SystemStats.Memory;
         }
 
         /// <summary>
-        /// Receives a json objct in the body contentType:application/json
+        /// Receives a json object in the body contentType:application/json
         /// </summary>
         /// <param name="value" >
         /// A json object.
@@ -50,25 +51,8 @@ namespace lb_agent.Controllers
         [Route("stats/memory/used")]
         public void PostJson([FromBody]int value)
         {
-            this.Logger.LogDebug("Value recived " + value);
+            this.Logger.LogDebug("Value received " + value);
             SystemStats.Memory.Used = value;
         }
-
-        /// <summary>
-        /// Receives any contentType in the body
-        /// </summary>
-        /// <example>Another event</example>
-        [HttpPost]
-        [Route("raw")]
-        public async Task PostRaw()
-        {
-            this.Logger.LogDebug("RAW received");
-            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
-            {
-                string value = await reader.ReadToEndAsync();
-                return;
-            }
-        }
-
     }
 }
