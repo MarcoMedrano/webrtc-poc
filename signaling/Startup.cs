@@ -14,6 +14,7 @@ namespace signaling
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton(p => new KurentoClient("ws://172.31.34.191:8888/kurento"));
+            services.AddScoped<RecordingFailover>();
 
             services.AddCors(options =>
             {
