@@ -8,6 +8,6 @@ namespace lb_agent
     public class Memory
     {
         public int Total { get; set; } = 1024;
-        public int Used { get; set; }
+        public int Available { get; set; }
     }
 }

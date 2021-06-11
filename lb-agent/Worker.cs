@@ -61,9 +61,8 @@ namespace lb_agent
                 try
                 {
                     // check for CPU, MEMORY, DISK, NETWORK and report availability
-                    int availableMem = SystemStats.Memory.Total - SystemStats.Memory.Used;
-                    logger.LogInformation($"[{ip}] reporting availability {availableMem}");
-                    await connection.InvokeAsync("ReportAvailability", availableMem);
+                    logger.LogInformation($"[{ip}] reporting availability {SystemStats.Memory.Available}");
+                    await connection.InvokeAsync("ReportAvailability", SystemStats.Memory.Available);
                 }
                 catch(Exception e)
                 {

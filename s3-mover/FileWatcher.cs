@@ -77,7 +77,7 @@ class FileWatcher
                 }
                 else
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(10));
+                    await Task.Delay(TimeSpan.FromSeconds(20));
                 }
 
                 numberOfFiles = newNumberOfFiles;
@@ -117,7 +117,7 @@ class FileWatcher
                 {
                     this.logger.LogDebug($"oldLength {oldLength}, newLength {newLength}");
                     oldLength = newLength;
-                    await Task.Delay(TimeSpan.FromSeconds(5));
+                    await Task.Delay(TimeSpan.FromSeconds(10));
                     newLength = fs.Length;
                 } while (newLength != oldLength);
             }

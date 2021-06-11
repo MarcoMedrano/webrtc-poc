@@ -1,10 +1,5 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace lb_agent.Controllers
 {
@@ -26,33 +21,34 @@ namespace lb_agent.Controllers
         [HttpGet]
         public string Get()
         {
-            this.Logger.LogDebug("Printing in memory Agent");
             return "Alive";
         }
 
+        /// <summary> 
+        /// Gets the computer stats, memory, cpu, disk, network
+        /// </summary>
         [HttpGet]
         [Route("memory")]
-
         public Memory GetStats()
         {
-            this.Logger.LogDebug("Printing stats");
+            this.Logger.LogDebug("Printing memory status");
             return SystemStats.Memory;
         }
 
         /// <summary>
-        /// Receives a json object in the body contentType:application/json
+        /// Receives the amount of memory available this agent should report
         /// </summary>
         /// <param name="value" >
-        /// A json object.
-        /// <example>"{'a':'event'}"</example>
+        /// A integer.
+        /// <example>512</example>
         /// </param>
         /// <response code="200">OK</response>
         [HttpPost]
-        [Route("memory/used")]
-        public void PostJson([FromBody]int value)
+        [Route("memory/available")]
+        public void PostMemoryAvailable([FromBody]int value)
         {
             this.Logger.LogDebug("Value received " + value);
-            SystemStats.Memory.Used = value;
+            SystemStats.Memory.Available = value;
         }
     }
 }

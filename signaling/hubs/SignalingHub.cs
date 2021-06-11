@@ -26,10 +26,21 @@ namespace signaling.hubs
 
         public override async Task OnConnectedAsync()
         {
-            this.logger.LogDebug("Client connected with ID " + this.Context.ConnectionId);
+            this.logger.LogDebug($"Client {this.Context.ConnectionId} connected");
             await base.OnConnectedAsync();
         }
 
+        public override async Task OnDisconnectedAsync(System.Exception exception)
+        {
+            this.logger.LogDebug($"Client {this.Context.ConnectionId} disconnected");
+            if (this.Context.Items.TryGetValue("recorder", out object recorderObj))
+            {
+                var recorder =  (RecordingFailover)recorderObj;
+                await recorder.Stop();
+            }
+
+            await base.OnDisconnectedAsync(exception);
+        }
 
         public async Task Ping()
         {
@@ -102,7 +113,10 @@ namespace signaling.hubs
             this.Context.Items.Add("kurento_endpoint", endpoint);
 
             // await endpoint.ConnectAsync(endpoint);
-            await this.recorder.CreateRecorderEndpointAsync(kurento, endpoint, pipeline);
+            await this.recorder.Setup(kurento, endpoint, pipeline);
+            this.recorder.Start();
+
+            this.Context.Items.Add("recorder", recorder);
 
             return endpoint;
         }

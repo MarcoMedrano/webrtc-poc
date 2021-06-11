@@ -75,7 +75,7 @@ namespace s3_mover
                 putRequest.Metadata.Add("x-amz-meta-title", fileName);
                 PutObjectResponse response = await s3Client.PutObjectAsync(putRequest);
 
-                this.logger.LogInformation("Uploaded with answer " + response.HttpStatusCode);
+                this.logger.LogInformation($"Uploaded {fileName} with answer {response.HttpStatusCode}");
             }
             catch(AmazonS3Exception e)
             {
