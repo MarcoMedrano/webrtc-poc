@@ -1,5 +1,6 @@
 namespace signaling
 {
+    using System;
     using System.Linq;
     class LoadBalancer
     {
@@ -10,7 +11,9 @@ namespace signaling
                        where kms.Role == role
                        where kms != except
                        orderby kms.Available descending
-                       select kms).First();
+                       select kms).FirstOrDefault();
+
+            if(next == null) throw new Exception("No more KMS available");
 
             return next;
         }

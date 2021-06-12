@@ -41,12 +41,16 @@ namespace signaling
 
             for(int i = 0; i < 2; i++)
             {
-                var mirrorEndpoint = await kurentoMirror.CreateAsync(new WebRtcEndpoint(pipeline));
-                await receiverEndpoint.ConnectAsync(mirrorEndpoint);
-
-                kms = LoadBalancer.NextAvailable("recorder", kms);
-                var recorderEndpoint = await this.OrchestateReplica(kms, mirrorEndpoint);
-                this.recorders.Add(recorderEndpoint);
+                try {
+                    var mirrorEndpoint = await kurentoMirror.CreateAsync(new WebRtcEndpoint(pipeline));
+                    await receiverEndpoint.ConnectAsync(mirrorEndpoint);
+    
+                    kms = LoadBalancer.NextAvailable("recorder", kms);
+                    var recorderEndpoint = await this.OrchestateReplica(kms, mirrorEndpoint);
+                    this.recorders.Add(recorderEndpoint);
+                } catch (Exception e) {
+                    this.logger.LogError($"Failed to Replica {i}");
+                }
             }
         }
 
@@ -75,7 +79,7 @@ namespace signaling
             await mirrorEndpoint.GatherCandidatesAsync();
             await preRecorderEndpoint.GatherCandidatesAsync();
 
-            RecorderEndpoint recorder = await kurento.CreateAsync(new RecorderEndpoint(pipelineRecorder, $"file:///tmp/{DateTime.Now.ToShortDateString()} [{kms.Ip}].webm", MediaProfileSpecType.WEBM_VIDEO_ONLY));
+            RecorderEndpoint recorder = await kurento.CreateAsync(new RecorderEndpoint(pipelineRecorder, $"file:///tmp/{DateTime.Now.ToShortTimeString()} [{kms.Ip}].webm", MediaProfileSpecType.WEBM_VIDEO_ONLY));
             recorder.Recording += (e) => this.logger.LogInformation("Recording");
 
             await preRecorderEndpoint.ConnectAsync(recorder, MediaType.VIDEO, "default", "default");
