@@ -16,12 +16,21 @@ namespace lb_agent
         private readonly ILogger<Worker> logger;
         private readonly HubConnection connection;
 
+        private readonly string ip;
+        private readonly int availability;
+        private readonly bool maintenanceMode;
+
         public Worker(ILogger<Worker> logger)
         {
             string lb_server = Environment.GetEnvironmentVariable("SIGNALING_SERVER");
 
             this.logger = logger;
+            this.ip = this.GetNetworkIPAddress();
+            this.availability = SystemStats.Memory.Available;
+            this.maintenanceMode = SystemStats.MaintenanceMode;
+
             string url = $"http://{lb_server}/loadBalancer";
+
             this.logger.LogInformation("url to connect " + url);
 
             this.connection = new HubConnectionBuilder()
@@ -35,9 +44,10 @@ namespace lb_agent
                 return Task.CompletedTask;
             };
 
-            connection.Reconnected += str =>
+            connection.Reconnected += async str =>
             {
-                return this.connection.InvokeAsync("ReportNetworkIpAddress", this.GetNetworkIPAddress());
+                await this.Register();
+                this.ReportAvailability();
             };
         }
 
@@ -46,11 +56,7 @@ namespace lb_agent
             await this.ConnectWithRetryAsync(stoppingToken);
             await Task.Delay(10000, stoppingToken);
 
-            var ip = this.GetNetworkIPAddress();
-            string role = Environment.GetEnvironmentVariable("MS_ROLE");
-
-            this.logger.LogInformation($"Registering with ip {ip} and role {role}");
-            await this.connection.InvokeAsync("Register", ip, role);
+            await this.Register();
 
             while(!stoppingToken.IsCancellationRequested)
             {
@@ -60,15 +66,32 @@ namespace lb_agent
 
                 try
                 {
-                    // check for CPU, MEMORY, DISK, NETWORK and report availability
-                    logger.LogInformation($"[{ip}] reporting availability {SystemStats.Memory.Available}");
-                    await connection.InvokeAsync("ReportAvailability", SystemStats.Memory.Available);
+                    // Only notify if there is substantial changes
+                    if(this.availability == SystemStats.Memory.Available
+                    && this.maintenanceMode == SystemStats.MaintenanceMode) continue;
+                    this.ReportAvailability();
+
                 }
                 catch(Exception e)
                 {
                     this.logger.LogError("Could not report availability due:\n" + e);
                 }
             }
+        }
+
+        private async Task Register()
+        {
+            string role = Environment.GetEnvironmentVariable("MS_ROLE");
+
+            this.logger.LogInformation($"Registering with ip {this.ip} and role {role}");
+            await this.connection.InvokeAsync("Register", ip, role);
+        }
+
+        private async Task ReportAvailability()
+        {
+            // check for CPU, MEMORY, DISK, NETWORK and report availability
+            logger.LogInformation($"[{this.ip}] reporting availability {SystemStats.Memory.Available}");
+            await connection.InvokeAsync("ReportAvailability", SystemStats.Memory.Available);
         }
 
         private async Task<bool> ConnectWithRetryAsync(CancellationToken token)

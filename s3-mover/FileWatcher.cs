@@ -8,6 +8,7 @@ using s3_mover;
 
 class FileWatcher
 {
+    private const int WaitForFileChangeInSeconds = 15;
     public string Filter
     {
         get => filter; 
@@ -37,7 +38,7 @@ class FileWatcher
     /// <summary>
     /// Notice
     /// This implementation wil lose files if 2 or more are created into 2 seconds.
-    /// If the process blocks the access to the file it may lose other files created into the 10 seconds.
+    /// If the process blocks the access to the file it may lose other files created into the 15 seconds.
     /// FileSystemWatcher detects multiple last file access on docker, if that is fixed use it.
     /// this current implementation to detect multiple file changes.
     /// </summary>
@@ -62,16 +63,17 @@ class FileWatcher
         {
             var directory = new DirectoryInfo(this.Path);
             var numberOfFiles = directory.GetFiles(this.Filter).Count();
+            this.logger.LogDebug("checking for new files");
 
             while (true)
             {
-                this.logger.LogDebug("checking for new files");
                 var files = directory.GetFiles(this.Filter);
                 var newNumberOfFiles = files.Count();
 
                 if (newNumberOfFiles > numberOfFiles)
                 {
                     var file = files.OrderByDescending(f => f.LastWriteTime).First();
+                    this.logger.LogInformation($"New file detected {file}");
                     await this.WaitUntilFileNotLocked(file);
                     this.Changed!.Invoke(this, new FileSystemEventArgs(WatcherChangeTypes.Created, file.Directory.FullName, file.Name));
                 }
@@ -94,7 +96,7 @@ class FileWatcher
     {
         async Task PostPone()
         {
-            await Task.Delay(TimeSpan.FromSeconds(10));
+            await Task.Delay(TimeSpan.FromSeconds(WaitForFileChangeInSeconds));
             await WaitUntilFileNotLocked(file);
         }
 
@@ -117,9 +119,10 @@ class FileWatcher
                 {
                     this.logger.LogDebug($"oldLength {oldLength}, newLength {newLength}");
                     oldLength = newLength;
-                    await Task.Delay(TimeSpan.FromSeconds(10));
+                    await Task.Delay(TimeSpan.FromSeconds(WaitForFileChangeInSeconds));
                     newLength = fs.Length;
-                } while (newLength != oldLength);
+                    if(newLength == 0) this.logger.LogWarning($"File has 0 bytes after wait {WaitForFileChangeInSeconds} seconds");
+                } while (newLength != oldLength && newLength != 0);
             }
         }
         catch (IOException)

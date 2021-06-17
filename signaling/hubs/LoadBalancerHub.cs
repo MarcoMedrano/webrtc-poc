@@ -21,7 +21,7 @@ namespace signaling.hubs
         public void Register(string ip, string role)
         {
             var feature = Context.Features.Get<IHttpConnectionFeature>();
-            var kms = new KurentoMediaServer(ip, feature.RemotePort, role);
+            var kms = new KurentoMediaServer(this.Context.ConnectionId, ip, feature.RemotePort, role);
             this.logger.LogInformation($"Agent connected {kms}");
 
             if(Cache.MediaServers.Contains(kms))
@@ -64,19 +64,19 @@ namespace signaling.hubs
         public override Task OnDisconnectedAsync(Exception exception)
         {
             var feature = Context.Features.Get<IHttpConnectionFeature>();
-            var kms = new KurentoMediaServer(feature.RemoteIpAddress.ToString(), feature.RemotePort);
+            var kms = Cache.MediaServers.Find(kms => kms.ConnectionId == this.Context.ConnectionId);
 
             this.logger.LogWarning($"Client disconnected {kms}");
 
-            if(Cache.MediaServers.Contains(kms))
+            if(kms != null)
                 Cache.MediaServers.Remove(kms);
             else
-                this.logger.LogWarning($"Media Server {kms} did not exist in cache");
+                this.logger.LogWarning($"Media Server {kms.ConnectionId } did not exist in cache");
 
             if(this.Context.Items.ContainsKey("kms"))
                 this.Context.Items.Remove("kms");
             else
-                this.logger.LogWarning($"Media Server {kms} did not exist in context");
+                this.logger.LogWarning($"Media Server {kms.ConnectionId } did not exist in context");
 
             return base.OnDisconnectedAsync(exception);
         }

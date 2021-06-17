@@ -26,13 +26,13 @@ namespace signaling.hubs
 
         public override async Task OnConnectedAsync()
         {
-            this.logger.LogDebug($"Client {this.Context.ConnectionId} connected");
+            this.logger.LogInformation($"Client {this.Context.ConnectionId} connected");
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(System.Exception exception)
         {
-            this.logger.LogDebug($"Client {this.Context.ConnectionId} disconnected");
+            this.logger.LogInformation($"Client {this.Context.ConnectionId} disconnected");
             if (this.Context.Items.TryGetValue("recorder", out object recorderObj))
             {
                 var recorder =  (RecordingFailover)recorderObj;
@@ -78,7 +78,7 @@ namespace signaling.hubs
                 return (WebRtcEndpoint)endpointObj;
             }
 
-            this.logger.LogDebug("CREATING KURENTO ENDPOINT ");
+            this.logger.LogInformation("CREATING KURENTO ENDPOINT ");
 
             KurentoClient kurento = null;
             if (this.Context.Items.TryGetValue("kms", out object obj))
@@ -106,7 +106,7 @@ namespace signaling.hubs
 
             endpoint.OnIceCandidate += arg =>
             {
-                this.logger.LogInformation("Kurento ice candidate " + JsonConvert.SerializeObject(arg.candidate));
+                this.logger.LogDebug("Kurento ice candidate " + JsonConvert.SerializeObject(arg.candidate));
                 Clients.Caller.AddRemoteIceCandidate(JsonConvert.SerializeObject(arg.candidate));
             };
 

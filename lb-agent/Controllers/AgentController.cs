@@ -45,10 +45,21 @@ namespace lb_agent.Controllers
         /// <response code="200">OK</response>
         [HttpPost]
         [Route("memory/available")]
-        public void PostMemoryAvailable([FromBody]int value)
+        public void PostMemoryAvailable([FromBody] int value)
         {
-            this.Logger.LogDebug("Value received " + value);
+            this.Logger.LogDebug("Memory available received " + value);
             SystemStats.Memory.Available = value;
+        }
+
+        /// <summary>
+        /// Receives wether this agent host should be in maintenance mode or not
+        /// </summary>
+        [HttpPost]
+        [Route("maintenance_mode")]
+        public void PostMaintenanceMode([FromBody] bool value)
+        {
+            this.Logger.LogDebug("Maintenance mode received " + value);
+            SystemStats.MaintenanceMode = value;
         }
     }
 }

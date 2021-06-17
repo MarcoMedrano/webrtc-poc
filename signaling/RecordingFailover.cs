@@ -62,13 +62,13 @@ namespace signaling
 
             preRecorderEndpoint.OnIceCandidate += async arg =>
             {
-                this.logger.LogInformation("Kurento Recorder ice candidate " + JsonConvert.SerializeObject(arg.candidate));
+                this.logger.LogDebug("Kurento Recorder ice candidate " + JsonConvert.SerializeObject(arg.candidate));
                 await mirrorEndpoint.AddIceCandidateAsync(arg.candidate);
             };
 
             mirrorEndpoint.OnIceCandidate += async arg =>
             {
-                this.logger.LogInformation("Kurento Mirror ice candidate " + JsonConvert.SerializeObject(arg.candidate));
+                this.logger.LogDebug("Kurento Mirror ice candidate " + JsonConvert.SerializeObject(arg.candidate));
                 await preRecorderEndpoint.AddIceCandidateAsync(arg.candidate);
             };
 

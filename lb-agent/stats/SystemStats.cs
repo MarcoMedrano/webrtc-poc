@@ -3,6 +3,8 @@ namespace lb_agent
     static class SystemStats
     {
         public static Memory Memory = new Memory();
+
+        public static bool MaintenanceMode { get; internal set; }
     }
 
     public class Memory
