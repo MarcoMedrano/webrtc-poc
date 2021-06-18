@@ -33,9 +33,10 @@ namespace signaling.hubs
         public override async Task OnDisconnectedAsync(System.Exception exception)
         {
             this.logger.LogInformation($"Client {this.Context.ConnectionId} disconnected");
-            if (this.Context.Items.TryGetValue("recorder", out object recorderObj))
+            if(this.Context.Items.TryGetValue("recorder", out object recorderObj))
             {
-                var recorder =  (RecordingFailover)recorderObj;
+                var recorder = (RecordingFailover)recorderObj;
+                //also disconnect all associations...
                 await recorder.Stop();
             }
 
@@ -73,15 +74,18 @@ namespace signaling.hubs
         private async Task<WebRtcEndpoint> GetKurentoEndpointAsync()
         {
             WebRtcEndpoint endpoint = null;
-            if (this.Context.Items.TryGetValue("kurento_endpoint", out object endpointObj))
+            if(this.Context.Items.TryGetValue("kurento_endpoint", out object endpointObj))
             {
                 return (WebRtcEndpoint)endpointObj;
             }
 
             this.logger.LogInformation("CREATING KURENTO ENDPOINT ");
 
+            var feature = Context.Features.Get<IHttpConnectionFeature>();
+            var client = $"{feature.RemoteIpAddress}:{feature.RemotePort}";
+
             KurentoClient kurento = null;
-            if (this.Context.Items.TryGetValue("kms", out object obj))
+            if(this.Context.Items.TryGetValue("kms", out object obj))
             {
                 kurento = (KurentoClient)obj;
             }
@@ -92,9 +96,7 @@ namespace signaling.hubs
                 kurento = kms.KurentoClient;
                 this.Context.Items.Add("kms", kurento);
 
-                var feature = Context.Features.Get<IHttpConnectionFeature>();
-
-                this.logger.LogInformation($"KMS {kms} assigned to {feature.RemoteIpAddress}:{feature.RemotePort}");
+                this.logger.LogInformation($"{client} assigned to MS {kms}");
             }
 
             var pipeline = await kurento.CreateAsync(new MediaPipeline());
@@ -113,7 +115,7 @@ namespace signaling.hubs
             this.Context.Items.Add("kurento_endpoint", endpoint);
 
             // await endpoint.ConnectAsync(endpoint);
-            await this.recorder.Setup(kurento, endpoint, pipeline);
+            await this.recorder.Setup(client, kurento, endpoint, pipeline);
             this.recorder.Start();
 
             this.Context.Items.Add("recorder", recorder);

@@ -54,8 +54,11 @@ namespace s3_mover
 
         private async void OnChanged(object sender, FileSystemEventArgs e)
         {
-            this.logger.LogInformation($"Changed {e.Name} {e.ChangeType}");
-            await UploadFileAsync(e.Name, e.FullPath);
+            this.logger.LogInformation($"Created {e.Name} {e.ChangeType}");
+            if(new FileInfo(e.FullPath).Length == 0)
+                this.logger.LogError($"File {e.Name} is empty!");
+            else
+                await UploadFileAsync(e.Name, e.FullPath);
         }
 
         private async Task UploadFileAsync(string fileName, string filePath)

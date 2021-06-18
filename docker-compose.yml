@@ -33,27 +33,27 @@ services:
       - MS_NAME=ms_mirror1
       - SIGNALING_SERVER=host.docker.internal:5000
       - KMS_MIN_PORT=6001
-      - KMS_MAX_PORT=6010
+      - KMS_MAX_PORT=6040
       - GST_DEBUG="2,Kurento*:3,kms*:3,sdp*:3,webrtc*:3,*rtpendpoint:3,rtp*handler:3,rtpsynchronizer:3,agnosticbin:3"
     ports: 
       - 8001:5001
-      - 6001-6010:6001-6010/udp
+      - 6001-6040:6001-6040/udp
 
-  ms_mirror2:
-    container_name: ms_mirror2
-    build:
-      context: .
-      dockerfile: kurento/Dockerfile
-    environment: 
-      - MS_ROLE=mirror
-      - MS_NAME=ms_mirror2
-      - SIGNALING_SERVER=host.docker.internal:5000
-      - KMS_MIN_PORT=6011
-      - KMS_MAX_PORT=6020
-      - GST_DEBUG="2,Kurento*:2,kms*:2,sdp*:2,webrtc*:2,*rtpendpoint:2,rtp*handler:2,rtpsynchronizer:2,agnosticbin:2"
-    ports: 
-      - 8002:5001
-      - 6011-6020:6011-6020/udp
+  # ms_mirror2:
+  #   container_name: ms_mirror2
+  #   build:
+  #     context: .
+  #     dockerfile: kurento/Dockerfile
+  #   environment: 
+  #     - MS_ROLE=mirror
+  #     - MS_NAME=ms_mirror2
+  #     - SIGNALING_SERVER=host.docker.internal:5000
+  #     - KMS_MIN_PORT=6021
+  #     - KMS_MAX_PORT=6040
+  #     - GST_DEBUG="2,Kurento*:2,kms*:2,sdp*:2,webrtc*:2,*rtpendpoint:2,rtp*handler:2,rtpsynchronizer:2,agnosticbin:2"
+  #   ports: 
+  #     - 8002:5001
+  #     - 6021-6040:6021-6040/udp
 
   # ms_mirror3:
   #   container_name: ms_mirror3
@@ -64,12 +64,12 @@ services:
   #     - MS_ROLE=mirror
   #     - MS_NAME=ms_mirror3
   #     - SIGNALING_SERVER=host.docker.internal:5000
-  #     - KMS_MIN_PORT=6021
-  #     - KMS_MAX_PORT=6030
+  #     - KMS_MIN_PORT=6041
+  #     - KMS_MAX_PORT=6060
   #     - GST_DEBUG="2,Kurento*:2,kms*:2,sdp*:2,webrtc*:2,*rtpendpoint:2,rtp*handler:2,rtpsynchronizer:2,agnosticbin:2"
   #   ports: 
   #     - 8003:5001
-  #     - 6021-6030:6021-6030/udp
+  #     - 6041-6060:6041-6060/udp
 
   ms_recorder1:
     container_name: ms_recorder1
@@ -81,14 +81,14 @@ services:
       - MS_NAME=ms_recorder1
       - SIGNALING_SERVER=host.docker.internal:5000
       - AWS_BUCKET_NAME=tdx-recordings
-      - AWS_ACCESS_KEY_ID=AKIAQ22PRT5NTM3YERXC
-      - AWS_SECRET_KEY=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
-      - KMS_MIN_PORT=6031
-      - KMS_MAX_PORT=6040
+      - AWS_ACCESS_KEY_ID=key
+      - AWS_SECRET_KEY=secret
+      - KMS_MIN_PORT=6000
+      - KMS_MAX_PORT=7000
       - GST_DEBUG="2,Kurento*:2,kms*:2,sdp*:2,webrtc*:2,*rtpendpoint:2,rtp*handler:2,rtpsynchronizer:2,agnosticbin:2"
     ports: 
       - 9001:5001
-      - 6031-6040:6031-6040/udp
+      # - 6061-6080:6061-6080/udp
 
   ms_recorder2:
     container_name: ms_recorder2
@@ -100,14 +100,31 @@ services:
       - MS_NAME=ms_recorder2
       - SIGNALING_SERVER=host.docker.internal:5000
       - AWS_BUCKET_NAME=tdx-recordings
-      - AWS_ACCESS_KEY_ID=AKIAQ22PRT5NTM3YERXC
-      - AWS_SECRET_KEY=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
-      - KMS_MIN_PORT=6041
-      - KMS_MAX_PORT=6050
+      - AWS_ACCESS_KEY_ID=key
+      - AWS_SECRET_KEY=secret
+      - KMS_MIN_PORT=6000
+      - KMS_MAX_PORT=7000
       - GST_DEBUG="2,Kurento*:2,kms*:2,sdp*:2,webrtc*:2,*rtpendpoint:2,rtp*handler:2,rtpsynchronizer:2,agnosticbin:2"
     ports: 
       - 9002:5001
-      - 6041-6050:6041-6050/udp
+
+  ms_recorder3:
+    container_name: ms_recorder3
+    build:
+      context: .
+      dockerfile: kurento/Dockerfile
+    environment: 
+      - MS_ROLE=recorder
+      - MS_NAME=ms_recorder3
+      - SIGNALING_SERVER=host.docker.internal:5000
+      - AWS_BUCKET_NAME=tdx-recordings
+      - AWS_ACCESS_KEY_ID=key
+      - AWS_SECRET_KEY=secret
+      - KMS_MIN_PORT=6000
+      - KMS_MAX_PORT=7000
+      - GST_DEBUG="2,Kurento*:2,kms*:2,sdp*:2,webrtc*:2,*rtpendpoint:2,rtp*handler:2,rtpsynchronizer:2,agnosticbin:2"
+    ports: 
+      - 9003:5001
 
 #   turn:
 #     container_name: coturn

@@ -8,8 +8,8 @@ using s3_mover;
 
 class FileWatcher
 {
-    private const int WaitForFileChangeInSeconds = 15;
-    private const int MaxFailedChecks = 10;
+    private const int WaitForFileChangeInSeconds = 5;
+    private const int MaxFailedChecks = 6;
     public string Filter
     {
         get => filter;
@@ -40,7 +40,7 @@ class FileWatcher
     /// <summary>
     /// Notice
     /// This implementation wil lose files if 2 or more are created into 2 seconds.
-    /// If the process blocks the access to the file it may lose other files created into the 15 seconds.
+    /// If the process blocks the access to the file it may lose other files created into the 5 seconds.
     /// FileSystemWatcher detects multiple last file access on docker, if that is fixed use it.
     /// this current implementation to detect multiple file changes.
     /// </summary>
@@ -53,11 +53,11 @@ class FileWatcher
     {
         if(string.IsNullOrEmpty(this.Path) || string.IsNullOrEmpty(this.Filter)) return;
 
-        var task = Task.Run(this.CheckForFileChanges);
+        var task = Task.Run(this.CheckForNewFiles);
         this.logger.LogInformation($"Task scheduled with id {task.Id}, current thread {Thread.CurrentThread.ManagedThreadId}");
     }
 
-    private async void CheckForFileChanges()
+    private async void CheckForNewFiles()
     {
         this.logger.LogInformation($"CheckForFileChanges in {this.Path} on thread " + Thread.CurrentThread.ManagedThreadId);
 
@@ -72,16 +72,16 @@ class FileWatcher
                 var files = directory.GetFiles(this.Filter);
                 var newNumberOfFiles = files.Count();
 
+                // TODO detect multiple file changes as well as deleted, maybe we need to map in memory the current files and compare against new map
                 if(newNumberOfFiles > numberOfFiles)
                 {
                     var file = files.OrderByDescending(f => f.LastWriteTime).First();
                     this.logger.LogInformation($"New file detected {file}");
-                    await this.WaitUntilFileNotLocked(file);
-                    this.Changed!.Invoke(this, new FileSystemEventArgs(WatcherChangeTypes.Created, file.Directory.FullName, file.Name));
+                    this.NotifyWhenFileNotLockedAsync(file);
                 }
                 else
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(20));
+                    await Task.Delay(TimeSpan.FromSeconds(WaitForFileChangeInSeconds));
                 }
 
                 numberOfFiles = newNumberOfFiles;
@@ -92,6 +92,12 @@ class FileWatcher
             this.logger.LogError("Error on FileWatcher " + e.Message);
             throw;
         }
+    }
+
+    private async void NotifyWhenFileNotLockedAsync(FileInfo file)
+    {
+        await this.WaitUntilFileNotLocked(file);
+        this.Changed!.Invoke(this, new FileSystemEventArgs(WatcherChangeTypes.Created, file.Directory.FullName, file.Name));
     }
 
     private async Task WaitUntilFileNotLocked(FileInfo file)
@@ -108,7 +114,7 @@ class FileWatcher
             {
                 if(!fs.CanWrite)
                 {
-                    this.logger.LogWarning("Cannot Write");
+                    this.logger.LogWarning($" {file.Name} Cannot Write");
                     fs.Dispose();
                     await PostPone();
                     return;
@@ -120,24 +126,28 @@ class FileWatcher
                 int totalFailedChecks = 0;
                 do
                 {
-                    this.logger.LogDebug($"oldLength {oldLength}, newLength {newLength}");
+                    this.logger.LogDebug($" {file.Name} oldLength {oldLength}, newLength {newLength}");
                     oldLength = newLength;
                     await Task.Delay(TimeSpan.FromSeconds(WaitForFileChangeInSeconds));
                     newLength = fs.Length;
                     if(newLength == 0)
                     {
-                        this.logger.LogWarning($"File has 0 bytes after wait {WaitForFileChangeInSeconds} seconds");
+                        this.logger.LogWarning($" {file.Name} File has 0 bytes after wait {WaitForFileChangeInSeconds} seconds");
                         totalFailedChecks++;
                     }
                 } while((newLength != oldLength || newLength == 0) && totalFailedChecks < MaxFailedChecks);
 
-                if(totalFailedChecks == MaxFailedChecks) this.logger.LogError($"File check reported 0 bytes changes during {WaitForFileChangeInSeconds * MaxFailedChecks} seconds");
+                if(totalFailedChecks == MaxFailedChecks) this.logger.LogError($" {file.Name} File check reported 0 bytes changes during {WaitForFileChangeInSeconds * MaxFailedChecks} seconds");
             }
         }
-        catch(IOException)
+        catch(IOException e)
         {
-            this.logger.LogWarning("Exception trying to read");
+            this.logger.LogWarning($"Exception with {file.Name} {e.Message}");
             await PostPone();
+        }
+        catch(Exception e)
+        {
+            this.logger.LogWarning($"Exception with {file.Name} {e.Message}");
         }
     }
 
