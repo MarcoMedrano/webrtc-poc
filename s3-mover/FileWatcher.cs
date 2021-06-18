@@ -9,10 +9,12 @@ using s3_mover;
 class FileWatcher
 {
     private const int WaitForFileChangeInSeconds = 15;
+    private const int MaxFailedChecks = 10;
     public string Filter
     {
-        get => filter; 
-        set {
+        get => filter;
+        set
+        {
             filter = value;
             this.RunIfReady();
         }
@@ -49,7 +51,7 @@ class FileWatcher
 
     private void RunIfReady()
     {
-        if (string.IsNullOrEmpty(this.Path) || string.IsNullOrEmpty(this.Filter)) return;
+        if(string.IsNullOrEmpty(this.Path) || string.IsNullOrEmpty(this.Filter)) return;
 
         var task = Task.Run(this.CheckForFileChanges);
         this.logger.LogInformation($"Task scheduled with id {task.Id}, current thread {Thread.CurrentThread.ManagedThreadId}");
@@ -65,12 +67,12 @@ class FileWatcher
             var numberOfFiles = directory.GetFiles(this.Filter).Count();
             this.logger.LogDebug("checking for new files");
 
-            while (true)
+            while(true)
             {
                 var files = directory.GetFiles(this.Filter);
                 var newNumberOfFiles = files.Count();
 
-                if (newNumberOfFiles > numberOfFiles)
+                if(newNumberOfFiles > numberOfFiles)
                 {
                     var file = files.OrderByDescending(f => f.LastWriteTime).First();
                     this.logger.LogInformation($"New file detected {file}");
@@ -85,7 +87,7 @@ class FileWatcher
                 numberOfFiles = newNumberOfFiles;
             }
         }
-        catch (System.Exception e)
+        catch(System.Exception e)
         {
             this.logger.LogError("Error on FileWatcher " + e.Message);
             throw;
@@ -102,9 +104,9 @@ class FileWatcher
 
         try
         {
-            using (FileStream fs = file.Open(FileMode.Open, FileAccess.Write, FileShare.None))
+            using(FileStream fs = file.Open(FileMode.Open, FileAccess.Write, FileShare.None))
             {
-                if (!fs.CanWrite)
+                if(!fs.CanWrite)
                 {
                     this.logger.LogWarning("Cannot Write");
                     fs.Dispose();
@@ -115,17 +117,24 @@ class FileWatcher
                 long oldLength = 0;
                 long newLength = fs.Length;
 
+                int totalFailedChecks = 0;
                 do
                 {
                     this.logger.LogDebug($"oldLength {oldLength}, newLength {newLength}");
                     oldLength = newLength;
                     await Task.Delay(TimeSpan.FromSeconds(WaitForFileChangeInSeconds));
                     newLength = fs.Length;
-                    if(newLength == 0) this.logger.LogWarning($"File has 0 bytes after wait {WaitForFileChangeInSeconds} seconds");
-                } while (newLength != oldLength && newLength == 0);
+                    if(newLength == 0)
+                    {
+                        this.logger.LogWarning($"File has 0 bytes after wait {WaitForFileChangeInSeconds} seconds");
+                        totalFailedChecks++;
+                    }
+                } while((newLength != oldLength || newLength == 0) && totalFailedChecks < MaxFailedChecks);
+
+                if(totalFailedChecks == MaxFailedChecks) this.logger.LogError($"File check reported 0 bytes changes during {WaitForFileChangeInSeconds * MaxFailedChecks} seconds");
             }
         }
-        catch (IOException)
+        catch(IOException)
         {
             this.logger.LogWarning("Exception trying to read");
             await PostPone();

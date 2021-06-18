@@ -35,27 +35,15 @@ namespace signaling.hubs
                 this.Context.Items.Add("kms", kms);
         }
 
-        public void ReportAvailability(long available)
+        public void ReportAvailability(long available, bool maintenanceMode)
         {
             KurentoMediaServer kms = null;
             if(this.Context.Items.TryGetValue("kms", out object obj))
             {
                 kms = (KurentoMediaServer)obj;
                 kms.Available = available;
-                this.logger.LogInformation($"KMS {kms} reported availability for {available} Mb");
-            }
-            else
-                this.logger.LogError("No media server found");
-        }
-
-        public void ReportMaintenanceMode(bool maintenance)
-        {
-            KurentoMediaServer kms = null;
-            if(this.Context.Items.TryGetValue("kms", out object obj))
-            {
-                kms = (KurentoMediaServer)obj;
-                kms.MaintenanceMode = maintenance;
-                this.logger.LogInformation($"KMS {kms} reported entering into maintenance mode {maintenance}");
+                kms.MaintenanceMode = maintenanceMode;
+                this.logger.LogInformation($"KMS {kms} reported availability for {available} Mb and maintenance mode {maintenanceMode}");
             }
             else
                 this.logger.LogError("No media server found");

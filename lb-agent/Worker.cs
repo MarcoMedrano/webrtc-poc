@@ -61,7 +61,7 @@ namespace lb_agent
 
             while(!stoppingToken.IsCancellationRequested)
             {
-                await Task.Delay(5000, stoppingToken);
+                await Task.Delay(1000, stoppingToken);
 
                 if(this.connection.State != HubConnectionState.Connected) continue;
 
@@ -95,8 +95,8 @@ namespace lb_agent
         private async Task ReportAvailability()
         {
             // check for CPU, MEMORY, DISK, NETWORK and report availability
-            logger.LogInformation($"[{this.ip}] reporting availability {SystemStats.Memory.Available}");
-            await connection.InvokeAsync("ReportAvailability", SystemStats.Memory.Available);
+            logger.LogInformation($"[{this.ip}] reporting availability {SystemStats.Memory.Available} and Maintenance mode {SystemStats.MaintenanceMode}");
+            await connection.InvokeAsync("ReportAvailability", SystemStats.Memory.Available, SystemStats.MaintenanceMode);
         }
 
         private async Task<bool> ConnectWithRetryAsync(CancellationToken token)

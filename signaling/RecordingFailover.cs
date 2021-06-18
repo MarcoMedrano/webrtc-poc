@@ -33,6 +33,8 @@ namespace signaling
                 // TODO properly release resources
                 // recorder.DisconnectAsync() 
                 });
+
+            this.recorders.Clear();
         }
 
         public async Task Setup(KurentoClient kurentoMirror, WebRtcEndpoint receiverEndpoint, MediaPipeline pipeline)
@@ -49,7 +51,7 @@ namespace signaling
                     var recorderEndpoint = await this.OrchestateReplica(kms, mirrorEndpoint);
                     this.recorders.Add(recorderEndpoint);
                 } catch (Exception e) {
-                    this.logger.LogError($"Failed to Replica {i}");
+                    this.logger.LogError($"Failed to setup recorder replica", e);
                 }
             }
         }
