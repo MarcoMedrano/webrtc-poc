@@ -18,10 +18,10 @@ namespace signaling.hubs
             this.configuration = configuration;
         }
 
-        public void Register(string ip, string role)
+        public void Register(string ip, string role, string name)
         {
             var feature = Context.Features.Get<IHttpConnectionFeature>();
-            var kms = new KurentoMediaServer(this.Context.ConnectionId, ip, feature.RemotePort, role);
+            var kms = new KurentoMediaServer(this.Context.ConnectionId, ip, feature.RemotePort, role, name);
             this.logger.LogInformation($"Agent connected {kms}");
 
             if(Cache.MediaServers.Contains(kms))
@@ -71,12 +71,12 @@ namespace signaling.hubs
             if(kms != null)
                 Cache.MediaServers.Remove(kms);
             else
-                this.logger.LogWarning($"Media Server {kms.ConnectionId } did not exist in cache");
+                this.logger.LogWarning($"Media Server {this.Context.ConnectionId } did not exist in cache");
 
             if(this.Context.Items.ContainsKey("kms"))
                 this.Context.Items.Remove("kms");
             else
-                this.logger.LogWarning($"Media Server {kms.ConnectionId } did not exist in context");
+                this.logger.LogWarning($"Media Server {this.Context.ConnectionId } did not exist in context");
 
             return base.OnDisconnectedAsync(exception);
         }

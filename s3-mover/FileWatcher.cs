@@ -122,7 +122,7 @@ class FileWatcher
                     await Task.Delay(TimeSpan.FromSeconds(WaitForFileChangeInSeconds));
                     newLength = fs.Length;
                     if(newLength == 0) this.logger.LogWarning($"File has 0 bytes after wait {WaitForFileChangeInSeconds} seconds");
-                } while (newLength != oldLength && newLength != 0);
+                } while (newLength != oldLength && newLength == 0);
             }
         }
         catch (IOException)

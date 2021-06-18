@@ -29,6 +29,7 @@ namespace signaling
         }
 
         public string Role { get; internal set; }
+        public string Name { get; }
 
         public KurentoMediaServer(string connectionId, string ip, int port, string role)
         {
@@ -38,9 +39,9 @@ namespace signaling
             this.Role = role;
         }
 
-        public KurentoMediaServer(string connectionId)
+        public KurentoMediaServer(string connectionId, string ip, int port, string role, string name) : this(connectionId, ip, port, role)
         {
-            this.ConnectionId = connectionId;
+            Name = name;
         }
 
         public override bool Equals(object obj)
@@ -54,7 +55,7 @@ namespace signaling
 
         public override string ToString()
         {
-            return $"{this.Ip}:{this.Port} - {this.Role}";
+            return $"{this.Ip}:{this.Port} - ({this.Name})";
         }
     }
 }

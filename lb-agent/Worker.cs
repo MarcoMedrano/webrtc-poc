@@ -17,8 +17,8 @@ namespace lb_agent
         private readonly HubConnection connection;
 
         private readonly string ip;
-        private readonly int availability;
-        private readonly bool maintenanceMode;
+        private int availability;
+        private bool maintenanceMode;
 
         public Worker(ILogger<Worker> logger)
         {
@@ -57,10 +57,11 @@ namespace lb_agent
             await Task.Delay(10000, stoppingToken);
 
             await this.Register();
+            await  this.ReportAvailability();
 
             while(!stoppingToken.IsCancellationRequested)
             {
-                await Task.Delay(30000, stoppingToken);
+                await Task.Delay(5000, stoppingToken);
 
                 if(this.connection.State != HubConnectionState.Connected) continue;
 
@@ -69,7 +70,10 @@ namespace lb_agent
                     // Only notify if there is substantial changes
                     if(this.availability == SystemStats.Memory.Available
                     && this.maintenanceMode == SystemStats.MaintenanceMode) continue;
-                    this.ReportAvailability();
+
+                    await this.ReportAvailability();
+                    this.availability = SystemStats.Memory.Available;
+                    this.maintenanceMode = SystemStats.MaintenanceMode;
 
                 }
                 catch(Exception e)
@@ -82,9 +86,10 @@ namespace lb_agent
         private async Task Register()
         {
             string role = Environment.GetEnvironmentVariable("MS_ROLE");
+            string name = Environment.GetEnvironmentVariable("MS_NAME");
 
-            this.logger.LogInformation($"Registering with ip {this.ip} and role {role}");
-            await this.connection.InvokeAsync("Register", ip, role);
+            this.logger.LogInformation($"Registering with ip {this.ip} role {role} and name {name}");
+            await this.connection.InvokeAsync("Register", ip, role, name);
         }
 
         private async Task ReportAvailability()
