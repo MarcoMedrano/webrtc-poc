@@ -32,14 +32,20 @@ namespace signaling.hubs
 
         public override async Task OnDisconnectedAsync(System.Exception exception)
         {
-            this.logger.LogInformation($"Client {this.Context.ConnectionId} disconnected");
-            if(this.Context.Items.TryGetValue("recorder", out object recorderObj))
+            try
             {
-                var recorder = (RecordingFailover)recorderObj;
-                //also disconnect all associations...
-                await recorder.Stop();
+                this.logger.LogInformation($"Client {this.Context.ConnectionId} disconnected");
+                if(this.Context.Items.TryGetValue("recorder", out object recorderObj))
+                {
+                    var recorder = (RecordingFailover)recorderObj;
+                    //also disconnect all associations...
+                    await recorder.Stop();
+                }
             }
-
+            catch(System.Exception e)
+            {
+                this.logger.LogError(e, $"Error disconnecting client {this.Context.ConnectionId}");
+            }
             await base.OnDisconnectedAsync(exception);
         }
 
@@ -52,21 +58,36 @@ namespace signaling.hubs
         #region SDP & ICE Negotiation
         public async Task AddOffer(string sdpOffer)
         {
-            this.logger.LogDebug("Adding remote offer \n" /*+ sdpOffer*/);
-            var endpoint = await GetKurentoEndpointAsync();
-            var sdpAnswer = await endpoint.ProcessOfferAsync(sdpOffer);
+            try
+            {
+                this.logger.LogDebug("Adding remote offer \n" /*+ sdpOffer*/);
+                var endpoint = await GetKurentoEndpointAsync();
+                var sdpAnswer = await endpoint.ProcessOfferAsync(sdpOffer);
 
-            await Clients.Caller.processAnswer(sdpAnswer);
+                await Clients.Caller.processAnswer(sdpAnswer);
 
-            await endpoint.GatherCandidatesAsync();
+                await endpoint.GatherCandidatesAsync();
+            }
+            catch(System.Exception e)
+            {
+                this.logger.LogError(e, $"Error adding offer from client {this.Context.ConnectionId}");
+
+            }
         }
 
         public async Task AddIceCandidate(string candidateStr /*IceCandidate candidate*/)
         {
-            var candidate = JsonConvert.DeserializeObject<IceCandidate>(candidateStr);
-            this.logger.LogDebug("Adding remote candidate " + JsonConvert.SerializeObject(candidate));
-            var endpoint = await this.GetKurentoEndpointAsync();
-            await endpoint.AddIceCandidateAsync(candidate);
+            try
+            {
+                var candidate = JsonConvert.DeserializeObject<IceCandidate>(candidateStr);
+                this.logger.LogDebug("Adding remote candidate " + JsonConvert.SerializeObject(candidate));
+                var endpoint = await this.GetKurentoEndpointAsync();
+                await endpoint.AddIceCandidateAsync(candidate);
+            }
+            catch(System.Exception e)
+            {
+                this.logger.LogError(e, $"Error adding ice candidate from client {this.Context.ConnectionId}");
+            }
 
         }
         #endregion
@@ -119,7 +140,7 @@ namespace signaling.hubs
             this.recorder.Start();
 
             this.Context.Items.Add("recorder", recorder);
-
+            // endpoint.ElementDisconnected
             return endpoint;
         }
     }

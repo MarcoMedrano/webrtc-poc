@@ -28,11 +28,19 @@ namespace signaling
             this.logger.LogDebug("Stop Recording");
             if(this.recorders.Count == 0) this.logger.LogWarning("No recorders to stop");
 
-            this.recorders.ForEach(async recorder => {
-                await recorder.StopAsync();
-                // TODO properly release resources
-                // recorder.DisconnectAsync() 
-                });
+            this.recorders.ForEach(async recorder =>
+            {
+                try
+                {
+                    await recorder.StopAsync();
+                    // TODO properly release resources
+                    // recorder.DisconnectAsync() 
+                }
+                catch(System.Exception e)
+                {
+                    this.logger.LogError($"Error stoping recording {e.Message}");
+                }
+            });
 
             this.recorders.Clear();
         }
@@ -43,15 +51,18 @@ namespace signaling
 
             for(int i = 1; i <= 2; i++)
             {
-                try {
+                try
+                {
                     var mirrorEndpoint = await kurentoMirror.CreateAsync(new WebRtcEndpoint(pipeline));
                     await receiverEndpoint.ConnectAsync(mirrorEndpoint);
-    
+
                     kms = LoadBalancer.NextAvailable("recorder", kms);
                     var recorderEndpoint = await this.OrchestateReplica(kms, mirrorEndpoint);
                     this.recorders.Add(recorderEndpoint);
                     this.logger.LogInformation($"client {client} assigned to recording replica {i} - {kms}");
-                } catch (Exception e) {
+                }
+                catch(Exception e)
+                {
                     this.logger.LogError($"Failed to setup recorder replica {i}", e);
                 }
             }
