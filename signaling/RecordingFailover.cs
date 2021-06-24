@@ -48,6 +48,7 @@ namespace signaling
         public async Task Setup(string client, KurentoClient kurentoMirror, WebRtcEndpoint receiverEndpoint, MediaPipeline pipeline)
         {
             KurentoMediaServer kms = null;
+            var fileName = Guid.NewGuid().ToString();
 
             for(int i = 1; i <= 2; i++)
             {
@@ -57,7 +58,7 @@ namespace signaling
                     await receiverEndpoint.ConnectAsync(mirrorEndpoint);
 
                     kms = LoadBalancer.NextAvailable("recorder", kms);
-                    var recorderEndpoint = await this.OrchestateReplica(kms, mirrorEndpoint);
+                    var recorderEndpoint = await this.OrchestateReplica(kms, mirrorEndpoint, fileName);
                     this.recorders.Add(recorderEndpoint);
                     this.logger.LogInformation($"client {client} assigned to recording replica {i} - {kms}");
                 }
@@ -68,7 +69,7 @@ namespace signaling
             }
         }
 
-        private async Task<RecorderEndpoint> OrchestateReplica(KurentoMediaServer kms, WebRtcEndpoint mirrorEndpoint)
+        private async Task<RecorderEndpoint> OrchestateReplica(KurentoMediaServer kms, WebRtcEndpoint mirrorEndpoint, string fileName)
         {
             var kurento = kms.KurentoClient;
             var pipelineRecorder = await kurento.CreateAsync(new MediaPipeline());
@@ -93,7 +94,8 @@ namespace signaling
             await mirrorEndpoint.GatherCandidatesAsync();
             await preRecorderEndpoint.GatherCandidatesAsync();
 
-            RecorderEndpoint recorder = await kurento.CreateAsync(new RecorderEndpoint(pipelineRecorder, $"file:///tmp/{DateTime.Now.ToShortTimeString()} [{kms.Name}].webm", MediaProfileSpecType.WEBM_VIDEO_ONLY));
+            RecorderEndpoint recorder = await kurento.CreateAsync(new RecorderEndpoint(pipelineRecorder, $"file:///tmp/{fileName}.webm", MediaProfileSpecType.WEBM_VIDEO_ONLY));
+            // RecorderEndpoint recorder = await kurento.CreateAsync(new RecorderEndpoint(pipelineRecorder, $"file:///tmp/{DateTime.Now.ToShortTimeString()} [{kms.Name}].webm", MediaProfileSpecType.WEBM_VIDEO_ONLY));
             recorder.Recording += (e) => this.logger.LogInformation("Recording");
 
             await preRecorderEndpoint.ConnectAsync(recorder, MediaType.VIDEO, "default", "default");

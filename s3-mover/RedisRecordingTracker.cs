@@ -31,13 +31,16 @@ namespace s3_mover
         internal async Task<bool> MarkAsCreatedAsync(string fileName)
         {
             var currentJson = await db.StringGetAsync(fileName);
-            var current = JsonConvert.DeserializeObject<RecordingTrack>(currentJson, new StringEnumConverter());
 
             if(!currentJson.IsNullOrEmpty)
-                this.logger.LogInformation($"{fileName} Already had value {currentJson}");
+            {
 
-            if(!currentJson.IsNullOrEmpty && current.Status != RecordingStatus.WithError)
-                return false;
+                this.logger.LogInformation($"{fileName} Already had value {currentJson}");
+                var current = JsonConvert.DeserializeObject<RecordingTrack>(currentJson, new StringEnumConverter());
+
+                if(current.Status != RecordingStatus.WithError)
+                    return false;
+            }
 
             return await this.MarkAsAsync(fileName, RecordingStatus.FileCreated);
         }

@@ -86,7 +86,7 @@ services:
       - KMS_MIN_PORT=6000
       - KMS_MAX_PORT=7000
       - GST_DEBUG="2,Kurento*:2,kms*:2,sdp*:2,webrtc*:2,*rtpendpoint:2,rtp*handler:2,rtpsynchronizer:2,agnosticbin:2"
-      - REDIS_HOSTS=local:redis:6379
+      - REDIS_HOSTS=redis
     ports: 
       - 9001:5001
 
@@ -105,7 +105,7 @@ services:
       - KMS_MIN_PORT=6000
       - KMS_MAX_PORT=7000
       - GST_DEBUG="2,Kurento*:2,kms*:2,sdp*:2,webrtc*:2,*rtpendpoint:2,rtp*handler:2,rtpsynchronizer:2,agnosticbin:2"
-      - REDIS_HOSTS=local:redis:6379
+      - REDIS_HOSTS=redis
     ports: 
       - 9002:5001
 
@@ -124,7 +124,7 @@ services:
   #     - KMS_MIN_PORT=6000
   #     - KMS_MAX_PORT=7000
   #     - GST_DEBUG="2,Kurento*:2,kms*:2,sdp*:2,webrtc*:2,*rtpendpoint:2,rtp*handler:2,rtpsynchronizer:2,agnosticbin:2"
-  #     - REDIS_HOSTS=local:redis:6379
+  #     - REDIS_HOSTS=redis
   #   ports: 
   #     - 9003:5001
 
