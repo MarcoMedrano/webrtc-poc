@@ -24,10 +24,15 @@ namespace s3_mover
         private const string FILTER = "*.webm";
         private string path = string.Empty;
         private ILogger<Worker> logger;
+        private readonly RedisRecordingTracker redis;
 
+        // TODO inject class type logger
         public S3Mover(ILogger<Worker> logger)
         {
             this.logger = logger;
+            this.redis = new RedisRecordingTracker(Environment.GetEnvironmentVariable("REDIS_HOSTS"),
+                                                    Environment.GetEnvironmentVariable("MS_NAME"),
+                                                    logger);
         }
 
         public void Run(string folder)
@@ -42,11 +47,12 @@ namespace s3_mover
             // watcher2.EnableRaisingEvents = true;
 
             // FileSystemWatcher not working in Docker image other than the MS one.
-            // so had to implement something more manual
+            // so had to implement a long pulling file watcher
             var watcher = new FileWatcher(this.logger);
             watcher.Path = path;
             watcher.Filter = FILTER;
             watcher.Changed += OnChanged;
+            // Probably is worth try to run kurento into MS image (if MS image is working for the file watcher)
 
             this.logger.LogInformation("Watching folder " + watcher.Path);
             this.logger.LogInformation("Bucket " + Environment.GetEnvironmentVariable("AWS_BUCKET_NAME"));
@@ -55,39 +61,57 @@ namespace s3_mover
         private async void OnChanged(object sender, FileSystemEventArgs e)
         {
             this.logger.LogInformation($"Created {e.Name} {e.ChangeType}");
-            if(new FileInfo(e.FullPath).Length == 0)
+            var markedAsCreated = await this.redis.MarkAsCreatedAsync(e.Name);
+
+            if(new FileInfo(e.FullPath).Length == 0 && markedAsCreated)
+            {
                 this.logger.LogError($"File {e.Name} is empty!");
-            else
+                await this.redis.MarkWithErrorAsync(e.Name);
+                return;
+            }
+
+            if(!markedAsCreated)
+            {
+                this.logger.LogInformation($"File {e.Name} already created by another service");
+                return;
+            }
+
+            try
+            {
+                var markedAsMoving = await this.redis.MarkAsMovingAsync(e.Name);
                 await UploadFileAsync(e.Name, e.FullPath);
+                await this.redis.MarkAsMovedAsync(e.Name);
+            }
+            catch(AmazonS3Exception ex)
+            {
+                this.logger.LogError("Error encountered:'{0}' when writing an object", ex.Message);
+                await this.redis.MarkWithErrorAsync(e.Name);
+            }
+            catch(Exception ex)
+            {
+                this.logger.LogError("Unknown error:'{0}' when writing an object", ex.Message);
+                await this.redis.MarkWithErrorAsync(e.Name);
+            }
+
         }
 
         private async Task UploadFileAsync(string fileName, string filePath)
         {
             var s3Client = new AmazonS3Client(RegionEndpoint.USEast1);
 
-            try
+            var putRequest = new PutObjectRequest
             {
-                var putRequest = new PutObjectRequest
-                {
-                    BucketName = Environment.GetEnvironmentVariable("AWS_BUCKET_NAME"),
-                    Key = "test/" + fileName,
-                    FilePath = filePath,
-                    ContentType = "text/plain"
-                };
+                BucketName = Environment.GetEnvironmentVariable("AWS_BUCKET_NAME"),
+                Key = "test/" + fileName,
+                FilePath = filePath,
+                ContentType = "text/plain"
+            };
 
-                putRequest.Metadata.Add("x-amz-meta-title", fileName);
-                PutObjectResponse response = await s3Client.PutObjectAsync(putRequest);
+            putRequest.Metadata.Add("x-amz-meta-title", fileName);
+            PutObjectResponse response = await s3Client.PutObjectAsync(putRequest);
 
-                this.logger.LogInformation($"Uploaded {fileName} with answer {response.HttpStatusCode}");
-            }
-            catch(AmazonS3Exception e)
-            {
-                this.logger.LogError("Error encountered:'{0}' when writing an object", e.Message);
-            }
-            catch(Exception e)
-            {
-                this.logger.LogError("Unknown error:'{0}' when writing an object", e.Message);
-            }
+            this.logger.LogInformation($"Uploaded {fileName} with answer {response.HttpStatusCode}");
+
         }
     }
 }

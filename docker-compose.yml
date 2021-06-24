@@ -33,11 +33,11 @@ services:
       - MS_NAME=ms_mirror1
       - SIGNALING_SERVER=host.docker.internal:5000
       - KMS_MIN_PORT=6001
-      - KMS_MAX_PORT=6040
+      - KMS_MAX_PORT=6050
       - GST_DEBUG="2,Kurento*:3,kms*:3,sdp*:3,webrtc*:3,*rtpendpoint:3,rtp*handler:3,rtpsynchronizer:3,agnosticbin:3"
     ports: 
       - 8001:5001
-      - 6001-6040:6001-6040/udp
+      - 6001-6050:6001-6050/udp
 
   # ms_mirror2:
   #   container_name: ms_mirror2
@@ -86,9 +86,9 @@ services:
       - KMS_MIN_PORT=6000
       - KMS_MAX_PORT=7000
       - GST_DEBUG="2,Kurento*:2,kms*:2,sdp*:2,webrtc*:2,*rtpendpoint:2,rtp*handler:2,rtpsynchronizer:2,agnosticbin:2"
+      - REDIS_HOSTS=local:redis:6379
     ports: 
       - 9001:5001
-      # - 6061-6080:6061-6080/udp
 
   ms_recorder2:
     container_name: ms_recorder2
@@ -105,26 +105,28 @@ services:
       - KMS_MIN_PORT=6000
       - KMS_MAX_PORT=7000
       - GST_DEBUG="2,Kurento*:2,kms*:2,sdp*:2,webrtc*:2,*rtpendpoint:2,rtp*handler:2,rtpsynchronizer:2,agnosticbin:2"
+      - REDIS_HOSTS=local:redis:6379
     ports: 
       - 9002:5001
 
-  ms_recorder3:
-    container_name: ms_recorder3
-    build:
-      context: .
-      dockerfile: kurento/Dockerfile
-    environment: 
-      - MS_ROLE=recorder
-      - MS_NAME=ms_recorder3
-      - SIGNALING_SERVER=host.docker.internal:5000
-      - AWS_BUCKET_NAME=tdx-recordings
-      - AWS_ACCESS_KEY_ID=key
-      - AWS_SECRET_KEY=secret
-      - KMS_MIN_PORT=6000
-      - KMS_MAX_PORT=7000
-      - GST_DEBUG="2,Kurento*:2,kms*:2,sdp*:2,webrtc*:2,*rtpendpoint:2,rtp*handler:2,rtpsynchronizer:2,agnosticbin:2"
-    ports: 
-      - 9003:5001
+  # ms_recorder3:
+  #   container_name: ms_recorder3
+  #   build:
+  #     context: .
+  #     dockerfile: kurento/Dockerfile
+  #   environment: 
+  #     - MS_ROLE=recorder
+  #     - MS_NAME=ms_recorder3
+  #     - SIGNALING_SERVER=host.docker.internal:5000
+  #     - AWS_BUCKET_NAME=tdx-recordings
+  #     - AWS_ACCESS_KEY_ID=key
+  #     - AWS_SECRET_KEY=secret
+  #     - KMS_MIN_PORT=6000
+  #     - KMS_MAX_PORT=7000
+  #     - GST_DEBUG="2,Kurento*:2,kms*:2,sdp*:2,webrtc*:2,*rtpendpoint:2,rtp*handler:2,rtpsynchronizer:2,agnosticbin:2"
+  #     - REDIS_HOSTS=local:redis:6379
+  #   ports: 
+  #     - 9003:5001
 
 #   turn:
 #     container_name: coturn
@@ -173,3 +175,20 @@ services:
 # #         - subnet: 172.16.238.0/24
 # #   backend:
 # #     internal: true
+
+  redis:
+    container_name: redis
+    hostname: redis
+    image: redis
+    ports:
+      - 6379:6379
+
+  redis-commander:
+    container_name: redis-commander
+    hostname: redis-commander
+    image: rediscommander/redis-commander:latest
+    restart: always
+    environment:
+    - REDIS_HOSTS=local:redis:6379
+    ports:
+    - "8081:8081"
