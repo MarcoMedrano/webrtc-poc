@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
-
+using System.Linq;
 namespace signaling.hubs
 {
     public class SignalingHub : DynamicHub
@@ -41,6 +41,43 @@ namespace signaling.hubs
                     //also disconnect all associations...
                     await recorder.Stop();
                 }
+
+                if(this.Context.Items.TryGetValue("pipeline", out object obj))
+                {
+                    var pipeline = (MediaPipeline) obj;
+                    await pipeline.ReleaseAsync();
+                }
+                // var pipeline = await endpoint.GetMediaPipelineAsync();
+                // if(pipeline != null)
+                // {
+                //     if(this.Context.Items.TryGetValue("kms", out object obj))
+                //     {
+                        // var kurento = (KurentoClient)obj;
+                        // var refreshedPipeline = await kurento.CreateAsync(pipeline);
+                        // this.logger.LogInformation("Releasing pipeline " + await refreshedPipeline.GetNameAsync());
+                        // await refreshedPipeline.ReleaseAsync();
+                        // this.logger.LogInformation("Released successfully");
+
+
+                        // var pipelines = await kurento.GetServerManager().GetPipelinesAsync();
+                        // this.logger.LogInformation($"Has {pipelines.Length} pipelines");
+                        // var attachedPipeline = pipelines.FirstOrDefault(p =>
+                        // {
+                        //     var t = Task.Run(async () =>
+                        //     {
+                        //         this.logger.LogInformation($"pipeline - {p}");
+                        //         return await p.GetNameAsync();
+                        //     });
+                        //     Task.WaitAll(t);
+                        //     this.logger.LogInformation($"returning  {t.Result} - {this.Context.ConnectionId}");
+                        //     return t.Result == this.Context.ConnectionId;
+                        // });
+                        // this.logger.LogInformation($"Attached pipeline found {await attachedPipeline.GetNameAsync()}");
+                        // if(attachedPipeline != null) await attachedPipeline.ReleaseAsync();
+                //     }
+                // }
+                // else
+                    // await pipeline.ReleaseAsync();
             }
             catch(System.Exception e)
             {
@@ -121,6 +158,7 @@ namespace signaling.hubs
             }
 
             var pipeline = await kurento.CreateAsync(new MediaPipeline());
+            await pipeline.SetNameAsync(this.Context.ConnectionId);
 
             endpoint = await kurento.CreateAsync(new WebRtcEndpoint(pipeline));
             await endpoint.SetStunServerAddressAsync(this.settings.Turn.ip);
@@ -140,6 +178,7 @@ namespace signaling.hubs
             this.recorder.Start();
 
             this.Context.Items.Add("recorder", recorder);
+            this.Context.Items.Add("pipeline", pipeline);
             // endpoint.ElementDisconnected
             return endpoint;
         }

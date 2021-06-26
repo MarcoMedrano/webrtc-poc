@@ -42,7 +42,7 @@ namespace signaling.hubs
             }
         }
 
-        public void ReportAvailability(long available, bool maintenanceMode)
+        public async void ReportAvailability(long available, bool maintenanceMode)
         {
             try
             {
@@ -53,6 +53,12 @@ namespace signaling.hubs
                     kms.Available = available;
                     kms.MaintenanceMode = maintenanceMode;
                     this.logger.LogInformation($"KMS {kms} reported availability for {available} Mb and maintenance mode {maintenanceMode}");
+
+                    if(true || maintenanceMode)
+                    {
+                        var pipelines = await kms.KurentoClient.GetServerManager().GetPipelinesAsync();
+                        this.logger.LogInformation($"KMS {kms}  has {pipelines.Length} pipelines");
+                    }
                 }
                 else
                     this.logger.LogError("No media server found");

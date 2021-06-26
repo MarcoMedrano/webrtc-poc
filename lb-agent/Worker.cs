@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.SignalR.Client;
 using System.Net;
 using System.Net.Sockets;
+using Kurento.NET;
 
 namespace lb_agent
 {
@@ -19,6 +20,10 @@ namespace lb_agent
         private readonly string ip;
         private int availability;
         private bool maintenanceMode;
+
+        private Lazy<KurentoClient> kurentoClient = new Lazy<KurentoClient>(() => new KurentoClient($"ws://localhost:8888/kurento"));
+        public KurentoClient KurentoClient => this.kurentoClient.Value;
+
 
         public Worker(ILogger<Worker> logger)
         {
@@ -94,6 +99,8 @@ namespace lb_agent
 
         private async Task ReportAvailability()
         {
+            var pipelines = await this.KurentoClient.GetServerManager().GetPipelinesAsync();
+            this.logger.LogInformation($"this server still has {pipelines.Length} pipelines");
             // check for CPU, MEMORY, DISK, NETWORK and report availability
             logger.LogInformation($"[{this.ip}] reporting availability {SystemStats.Memory.Available} and Maintenance mode {SystemStats.MaintenanceMode}");
             await connection.InvokeAsync("ReportAvailability", SystemStats.Memory.Available, SystemStats.MaintenanceMode);
