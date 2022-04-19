@@ -9,7 +9,7 @@ using s3_mover;
 class FileWatcher
 {
     private const int WaitForFileChangeInSeconds = 5;
-    private const int MaxFailedChecks = 6;
+    private const int MaxFailedChecks = 12;
     public string Filter
     {
         get => filter;

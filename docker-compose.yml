@@ -33,11 +33,11 @@ services:
       - MS_NAME=ms_mirror1
       - SIGNALING_SERVER=host.docker.internal:5000
       - KMS_MIN_PORT=6001
-      - KMS_MAX_PORT=6050
-      - GST_DEBUG="2,Kurento*:3,kms*:3,sdp*:3,webrtc*:3,*rtpendpoint:3,rtp*handler:3,rtpsynchronizer:3,agnosticbin:3"
+      - KMS_MAX_PORT=6010
+      - GST_DEBUG="4,Kurento*:4,kms*:4,sdp*:4,webrtc*:4,*rtpendpoint:4,rtp*handler:4,rtpsynchronizer:4,agnosticbin:4"
     ports: 
       - 8001:5001
-      - 6001-6050:6001-6050/udp
+      - 6001-6010:6001-6010/udp
 
   # ms_mirror2:
   #   container_name: ms_mirror2
@@ -176,19 +176,29 @@ services:
 # #   backend:
 # #     internal: true
 
-  redis:
-    container_name: redis
-    hostname: redis
-    image: redis
-    ports:
-      - 6379:6379
+  # redis:
+  #   container_name: redis
+  #   hostname: redis
+  #   image: redis
+  #   ports:
+  #     - 6379:6379
 
-  redis-commander:
-    container_name: redis-commander
-    hostname: redis-commander
-    image: rediscommander/redis-commander:latest
-    restart: always
-    environment:
-    - REDIS_HOSTS=local:redis:6379
+  # redis-commander:
+  #   container_name: redis-commander
+  #   hostname: redis-commander
+  #   image: rediscommander/redis-commander:latest
+  #   restart: always
+  #   environment:
+  #   - REDIS_HOSTS=local:redis:6379
+  #   ports:
+  #   - "8081:8081"
+
+  web:
+    image: nginx
+    volumes:
+     - ./nginx/templates:/etc/nginx/templates
     ports:
-    - "8081:8081"
+     - "8080:80"
+    environment:
+     - NGINX_HOST=foobar.com
+     - NGINX_PORT=80

@@ -34,7 +34,7 @@ namespace lb_agent
             this.availability = SystemStats.Memory.Available;
             this.maintenanceMode = SystemStats.MaintenanceMode;
 
-            string url = $"http://{lb_server}/loadBalancer";
+            string url = $"http://{lb_server ?? "localhost"}/loadBalancer";
 
             this.logger.LogInformation("url to connect " + url);
 
@@ -62,7 +62,7 @@ namespace lb_agent
             await Task.Delay(10000, stoppingToken);
 
             await this.Register();
-            await  this.ReportAvailability();
+            await this.ReportAvailability();
 
             while(!stoppingToken.IsCancellationRequested)
             {
@@ -86,6 +86,38 @@ namespace lb_agent
                     this.logger.LogError("Could not report availability due:\n" + e);
                 }
             }
+
+            Console.WriteLine("stopping?");
+
+            this.logger.LogInformation("stoping service");
+
+            try
+            {
+                var serverManager = this.KurentoClient.GetServerManager();
+                int pipelines = (await serverManager.GetPipelinesAsync()).Length;
+
+                while(pipelines != 0)
+                {
+                    this.logger.LogWarning($"Still {pipelines} active, waiting for a gracefull shutdown");
+                    await Task.Delay(5000);
+
+                    pipelines = (await serverManager.GetPipelinesAsync()).Length;
+                }
+            }
+            catch(System.Exception e)
+            {
+                this.logger.LogError(e, "Error checking for available pipelines");
+            }
+
+        }
+
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            Console.WriteLine("STOPING?");
+            this.logger.LogInformation("STOP called ");
+            await Task.Delay(15000);
+            this.logger.LogInformation("proceeding with stop ");
+            await base.StopAsync(cancellationToken);
         }
 
         private async Task Register()
